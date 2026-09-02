@@ -1,0 +1,400 @@
+[
+  {
+    "index": 0,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_112204_V7yI6L.xlsx",
+    "file_path": "./output/xlsx/performance_1.xlsx",
+    "file_size_kb": "40.8",
+    "sheets": [
+      "Allocation of Funds"
+    ],
+    "preview": [
+      [
+        "DISBURSEMENT : NOTIONAL ALLOCATION Vs ACTUALS FOR 2022-23 to 2026-27"
+      ],
+      [
+        null,
+        null,
+        "(RS. IN LAKH)"
+      ],
+      [
+        "Srno.",
+        "State",
+        "2022-2023 (as on 31.03.23)",
+        null,
+        null,
+        "2023-2024 (as on 31.03.24)",
+        null,
+        null,
+        "2024-2025 (as on 31.03.25)",
+        null,
+        null,
+        "2025-2026 (as on 31.03.26)",
+        null,
+        null,
+        "2026-2027 (as on 31.07.26)"
+      ],
+      [
+        null,
+        null,
+        "ALLOCATION",
+        "ACTUALS",
+        "%AGE",
+        "ALLOCATION",
+        "ACTUALS",
+        "%AGE",
+        "ALLOCATION",
+        "ACTUALS",
+        "%AGE",
+        "ALLOCATION",
+        "ACTUALS",
+        "%AGE",
+        "ALLOCATION",
+        "ACTUALS",
+        "%AGE"
+      ],
+      [
+        1,
+        "Andaman & Nicobar",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12.4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  {
+    "index": 1,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_112134_jeSXkD.xlsx",
+    "file_path": "./output/xlsx/performance_2.xlsx",
+    "file_size_kb": "36.4",
+    "sheets": [
+      "Allocation of Funds"
+    ],
+    "preview": [
+      [
+        "DISBURSEMENT : ALLOCATION Vs ACTUALS AND NO. OF BENEFICIARIES"
+      ],
+      [
+        " ",
+        null,
+        null,
+        "(RS. IN LAKH)"
+      ],
+      [
+        "Sno.",
+        "State",
+        "2022-2023 (as on 31.03.2023)",
+        null,
+        null,
+        "2023-2024 (as on 31.03.2024)",
+        null,
+        null,
+        "2024-2025 (as on 31.03.2025)",
+        null,
+        null,
+        "2025-2026 (as on 31.03.2026)",
+        null,
+        null,
+        "2026-2027(as on 31.07.2026)"
+      ],
+      [
+        null,
+        null,
+        "Allocation",
+        "Actuals",
+        "No.of Benef.",
+        "Allocation",
+        "Actuals",
+        "No.of Benef.",
+        "Allocation",
+        "Actuals",
+        "No.of Benef.",
+        "Allocation",
+        "Actuals",
+        "No.of Benef.",
+        "Allocation",
+        "Actuals",
+        "No.of Benef."
+      ],
+      [
+        1,
+        "Andaman & Nikobar",
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12.4,
+        2,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  {
+    "index": 2,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_112044_MsUCri.xlsx",
+    "file_path": "./output/xlsx/performance_3.xlsx",
+    "file_size_kb": "11.8",
+    "sheets": [
+      "Sheet1"
+    ],
+    "preview": [
+      [
+        "YEAR-WISE DISBURSEMENT AND NO. OF BENEFICIARIES"
+      ],
+      [
+        " "
+      ],
+      [
+        null,
+        null,
+        null,
+        "(Rs. in crore)"
+      ],
+      [
+        "Sno.",
+        "Financial Year",
+        "Disbursement"
+      ],
+      [
+        null,
+        null,
+        "Amount",
+        "Beneficiaries"
+      ]
+    ]
+  },
+  {
+    "index": 3,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_111933_ESddVt.xlsx",
+    "file_path": "./output/xlsx/performance_4.xlsx",
+    "file_size_kb": "13.5",
+    "sheets": [
+      "Sheet1"
+    ],
+    "preview": [
+      [
+        "NSFDC : SCHEME-WISE / YEAR-WISE DISBURSEMENT STATUS OF 2024-25 TO 2026-27",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "(Rs. in crore)"
+      ],
+      [
+        "FINANCIAL YEAR",
+        "DISBURSEMENT AMOUNT"
+      ],
+      [
+        null,
+        "TERM LOAN",
+        "MCF",
+        "MSY",
+        "ELS",
+        "LVY",
+        "AMY",
+        "Udyam Nidhi",
+        "Utkarsh",
+        "Suvidha",
+        "MFS",
+        "Total"
+      ],
+      [
+        "2024-2025",
+        0,
+        42.65,
+        63.24,
+        11.71,
+        22.12,
+        0,
+        50,
+        27.69,
+        394.37,
+        0,
+        611.78
+      ],
+      [
+        "2025-2026",
+        385.73,
+        0.81,
+        13.12,
+        13.92,
+        10.6,
+        20,
+        126.03,
+        1.64,
+        66.51,
+        136.9,
+        775.26
+      ]
+    ]
+  },
+  {
+    "index": 4,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_111820_SIMVP5.xlsx",
+    "file_path": "./output/xlsx/performance_5.xlsx",
+    "file_size_kb": "52.8",
+    "sheets": [
+      "Disbursement of funds"
+    ],
+    "preview": [
+      [
+        "NSFDC : MEN/WOMEN AND RURAL/URBAN-WISE COVERAGE OF BENEFICIAIRIES AND DISBURSEMENT "
+      ],
+      [],
+      [
+        "FINANCIAL YEAR 2026-27 AS ON 31.07.2026"
+      ],
+      [
+        "Sno.",
+        "Particular",
+        "Beneficiaries Covered (in Nos.)",
+        null,
+        null,
+        "Amount Disbursed   (Rs. in Lakh)",
+        null,
+        null,
+        null,
+        "Beneficiaries Covered (in Nos.)",
+        null,
+        null,
+        "Amount Disbursed   (Rs. in Lakh)"
+      ],
+      []
+    ]
+  },
+  {
+    "index": 5,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_111751_eeTtav.xlsx",
+    "file_path": "./output/xlsx/performance_6.xlsx",
+    "file_size_kb": "13.0",
+    "sheets": [
+      "CA-wise Disb.&Benef."
+    ],
+    "preview": [
+      [],
+      [],
+      [
+        null,
+        "NSFDC : CHANNELISING  AGENCY-WISE  DISBURSEMENT AMOUNT AND COVERAGE OF BENEFICIARIES"
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        "(Rs. in Crore)"
+      ],
+      [
+        null,
+        "Financial year",
+        "SCAs",
+        "PSBs",
+        "RRBs",
+        "Other Financial ",
+        "Total"
+      ]
+    ]
+  },
+  {
+    "index": 6,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_111019_Rb0YFB.xlsx",
+    "file_path": "./output/xlsx/performance_7.xlsx",
+    "file_size_kb": "12.0",
+    "sheets": [
+      "Sheet1"
+    ],
+    "preview": [
+      [
+        null,
+        null,
+        "NSFDC : SECTOR-WISE STATUS "
+      ],
+      [],
+      [
+        null,
+        " ",
+        "DISBURSEMENT  ",
+        null,
+        "(Rs. in crore)"
+      ],
+      [
+        null,
+        null,
+        "Financial Year",
+        "Total",
+        "Transport, Services & Others",
+        "ELS",
+        "Agriculture"
+      ],
+      [
+        null,
+        null,
+        "2026-2027 (as on 31.07.2026)",
+        77.33,
+        75.59,
+        1.74,
+        0
+      ]
+    ]
+  },
+  {
+    "index": 7,
+    "url": "https://nsfdc.nic.in/storage/uploads/performance-data/20260812_111045_ND7oPa.xlsx",
+    "file_path": "./output/xlsx/performance_8.xlsx",
+    "file_size_kb": "9.6",
+    "sheets": [
+      "Sheet1"
+    ],
+    "preview": [
+      [
+        "Equity Support Vs Cumulative Disbursement"
+      ],
+      [
+        null,
+        null,
+        null,
+        "(Rs. in Crore)"
+      ],
+      [
+        null,
+        "Equity Support",
+        null,
+        "Cumulative"
+      ],
+      [
+        null,
+        "Equity Share",
+        "Internal Sources",
+        "Disbursement"
+      ],
+      [
+        "as on 31.03.2018",
+        1348.01,
+        3130.67,
+        4478.68
+      ]
+    ]
+  }
+]

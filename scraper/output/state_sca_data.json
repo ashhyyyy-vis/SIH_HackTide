@@ -1,0 +1,20 @@
+{
+  "Maharashtra": {
+    "state": "Maharashtra",
+    "org_name": "Maharashtra State SC Development Corporation",
+    "scraped_at": "2026-09-01T09:54:01.455Z",
+    "error": "All URLs failed"
+  },
+  "Rajasthan": {
+    "state": "Rajasthan",
+    "org_name": "Rajasthan State SC/ST/OBC Finance & Development Corporation",
+    "scraped_at": "2026-09-01T09:54:11.864Z",
+    "error": "All URLs failed"
+  },
+  "Tamil Nadu": {
+    "state": "Tamil Nadu",
+    "org_name": "Tamil Nadu State SC Development Corporation",
+    "scraped_at": "2026-09-01T09:54:11.928Z",
+    "error": "All URLs failed"
+  }
+}

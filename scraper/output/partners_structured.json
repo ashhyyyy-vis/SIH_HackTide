@@ -1,0 +1,581 @@
+{
+  "State_Channelizing_Agencies": {
+    "partner_type": "State_Channelizing_Agencies",
+    "total_partners": 38,
+    "partners": [
+      {
+        "serial_no": 1,
+        "state": "Andhra Pradesh",
+        "name": "Castes Cooperative Finance Corporation Ltd.",
+        "abbreviation": "APSCCFC",
+        "address": "SP River View Apartments, 3rd Floor,, Tadepalli,, Amaravathi – 522 501."
+      },
+      {
+        "serial_no": 2,
+        "state": "Andhra Pradesh",
+        "name": "Corporation",
+        "abbreviation": "APSFC",
+        "address": "APSFC Building, Plot OS No.2, 2nd, Cross, 3rd Road, Industrial Park,, Vijayawada – 520 007."
+      },
+      {
+        "serial_no": 3,
+        "state": "Assam",
+        "name": "Corporation for SCs Ltd.",
+        "abbreviation": "ASCDC",
+        "address": "Swahid Dilip Hozori Path,, Sarumotoria, Dispur,, Guwahati – 781 006."
+      },
+      {
+        "serial_no": 4,
+        "state": "Bihar",
+        "name": "Development Corporation Ltd.",
+        "abbreviation": "BSSCCDC",
+        "address": "RN-212, Officers Colony (Block-A),, Bailey Road,, Patna – 800 001."
+      },
+      {
+        "serial_no": 5,
+        "state": "Chandigarh",
+        "name": "Minorities Financial & Development Corporation Ltd.",
+        "abbreviation": "CSCFDC",
+        "address": "3rd Floor, Additional Town Hall, Building, Sector-17-C,, Chandigarh-160 017."
+      },
+      {
+        "serial_no": 6,
+        "state": "Chhattisgarh",
+        "name": "Sahkari Fin. & Dev.Corpn.,",
+        "abbreviation": "CGSCFDC",
+        "address": "4th Floor, Business Complex,, Chhattisgarh Housing Board Bhawan,, Naya Raipur, Chhattisgarh - 492101."
+      },
+      {
+        "serial_no": 7,
+        "state": "Dadra & Nagar Haveli, Daman",
+        "name": "& Diu Dadra & Nagar Haveli, Daman & Diu SCs/STs/OBCs & Minorities Financial & Development Corporation",
+        "abbreviation": "DNDSFDC",
+        "address": "Ground Floor, Right Wing, New, Collectorate Building, Near Electricity, Department, Opp. 66, KVA Sub-, Station, 66 KVA Road,, Silvassa – 396 230."
+      },
+      {
+        "serial_no": 8,
+        "state": "Delhi",
+        "name": "Handicapped Financial & Development Corporation",
+        "abbreviation": "DSFDC",
+        "address": "Ambedkar Bhawan, Sector-16, (Opp., Sector-11), Rohini,, Delhi – 110 085."
+      },
+      {
+        "serial_no": 9,
+        "state": "Gujarat",
+        "name": "Gujarat SCs Development Corporation",
+        "abbreviation": "GSCDC",
+        "address": "Dr Jivraj Mehta Bhawan, Block – 10,, II Floor, Old Sachivalaya,, Gandhinagar – 382 010."
+      },
+      {
+        "serial_no": 10,
+        "state": "Gujarat",
+        "name": "Nigam (S.C.)",
+        "abbreviation": "DAAVN",
+        "address": "Karmayogi Bhavan, Block No. 2,, D-2 Wing, 4th Floor, Sector -10/B,, Gandhinagar, Gujarat."
+      },
+      {
+        "serial_no": 11,
+        "state": "Goa",
+        "name": "and Development Corporation Ltd.",
+        "abbreviation": "GSCOBCDC",
+        "address": "4th Floor, Patto Centre,, Near K.T.C. Bus Stand, Panaji,, Goa – 403 001."
+      },
+      {
+        "serial_no": 12,
+        "state": "Haryana",
+        "name": "Development Corporation Ltd.,",
+        "abbreviation": "HSCDC",
+        "address": "SCO-2427-28, Sector 22-C,, Chandigarh – 160 022."
+      },
+      {
+        "serial_no": 13,
+        "state": "Himachal Pradesh",
+        "name": "Himachal Pradesh SCs & STs Development Corporation",
+        "abbreviation": "HPSCSTDC",
+        "address": "Kalyan Bhawan, Near Ambusha, Resort,, Solan – 173212, -- 1 of 3 --"
+      },
+      {
+        "serial_no": 14,
+        "state": "Jharkhand",
+        "name": "Castes Cooperative Development Corporation",
+        "abbreviation": "JSCDC",
+        "address": "Kalyan Complex, 3rd Floor, Balihar, Road, Morabadi,, Ranchi-834008."
+      },
+      {
+        "serial_no": 15,
+        "state": "Jammu & Kashmir",
+        "name": "J&K SCs, STs & OBCs Dev. Corpn. Ltd.",
+        "abbreviation": "JKSCSTBCDC",
+        "address": "Exchange Road,, Near Red Cross Office,, Srinagar – 190 001, (Office : May to October), &, 135-A, Last Morh, Gandhi Nagar, JAMMU -180 004, (Office : November to April)"
+      },
+      {
+        "serial_no": 16,
+        "state": "Karnataka",
+        "name": "Corporation Ltd.",
+        "abbreviation": "DBRADC",
+        "address": "9th & 10th Floor, Visheshwariah Mini, Tower, Dr Ambedkar Veedhi,, Bengaluru – 560 001."
+      },
+      {
+        "serial_no": 17,
+        "state": "Kerala",
+        "name": "Corporation for SCs & STs Ltd.,",
+        "abbreviation": "KSDC",
+        "address": "Town Hall Road,, Thrissur – 680 020."
+      },
+      {
+        "serial_no": 18,
+        "state": "Kerala",
+        "name": "Development Corporation",
+        "abbreviation": "KSWDC",
+        "address": "1st Floor, Transport Bhavan, KSRTC, Building, East Fort, Attakulangara-, 695023,"
+      },
+      {
+        "serial_no": 19,
+        "state": "Madhya Pradesh",
+        "name": "Finance & Development Corporation",
+        "abbreviation": "MPSCFDC",
+        "address": "Rajiv Gandhi Bhawan, 35, Shyamala, Hills,, Bhopal – 462 011."
+      },
+      {
+        "serial_no": 20,
+        "state": "Maharashtra",
+        "name": "Development Corporation Ltd.",
+        "abbreviation": "MPBCDC",
+        "address": "1-N, Supreme Shopping Centre,, Gulmohar Cross Road No.9,, J.V.P.D. Scheme, Juhu,, Mumbai – 400 049."
+      },
+      {
+        "serial_no": 21,
+        "state": "Maharashtra",
+        "name": "Annabhau Sathe Development Corporation Ltd.",
+        "abbreviation": "SLASDC",
+        "address": "New Administration Building No.2,, 3rd Floor, Ramkrushna Chemburkar, Marg,, Chembur (E),, Mumbai – 400 071."
+      },
+      {
+        "serial_no": 22,
+        "state": "Maharashtra",
+        "name": "& Charmakar Development Corporation",
+        "abbreviation": "LIDCOM",
+        "address": "Bombay Life Building, 5th Floor,, 45, Veer Nariman Road,, Mumbai – 400 001."
+      },
+      {
+        "serial_no": 23,
+        "state": "Manipur",
+        "name": "Corporation Ltd.",
+        "abbreviation": "MTDC",
+        "address": "Lamphelpat, Imphal – 795 004."
+      },
+      {
+        "serial_no": 24,
+        "state": "Manipur",
+        "name": "operative Dev. Bank",
+        "abbreviation": "MSTCB",
+        "address": "Nambun Long, Stadium Road, Imphal, East,, MANIPUR-795001."
+      },
+      {
+        "serial_no": 25,
+        "state": "Meghalaya",
+        "name": "Bank Ltd.",
+        "abbreviation": "MCAB",
+        "address": "M.G. Road, Kutchery,, Shillong – 793 001."
+      },
+      {
+        "serial_no": 26,
+        "state": "Mizoram",
+        "name": "Development Bank Ltd. (MUCO Bank) Lawlsawmiliani Building (Top Floor), Zarkawt, Aizwal -796 001.",
+        "abbreviation": null,
+        "address": ""
+      },
+      {
+        "serial_no": 27,
+        "state": "Mizoram",
+        "name": "Industries & Board",
+        "abbreviation": "MKVIB",
+        "address": "“Zorun” Zarkawt, Aizwal -796 007."
+      },
+      {
+        "serial_no": 28,
+        "state": "Odisha",
+        "name": "Co-op. Corpn. Ltd.",
+        "abbreviation": "OSFDC",
+        "address": "Lewis Road,, Bhubaneshwar – 751 014., -- 2 of 3 --"
+      },
+      {
+        "serial_no": 29,
+        "state": "Puducherry",
+        "name": "Corpn. Ltd.",
+        "abbreviation": "PADCO",
+        "address": "III Floor, Directorate of Adi Dravidar, Welfare Department, Thattanchavady,, Puducherry - 605 009"
+      },
+      {
+        "serial_no": 30,
+        "state": "Punjab",
+        "name": "Development & Finance Corporation",
+        "abbreviation": "PSCLDFC",
+        "address": "SCO No.101-102-103,, Sector 17-C,, Chandigarh – 160 017."
+      },
+      {
+        "serial_no": 31,
+        "state": "Rajasthan",
+        "name": "Dev. Co-op. Corporation Ltd.",
+        "abbreviation": "RSCDC",
+        "address": "III Floor, Central Block, Nehru, Sahakar Bhawan,, Bhawani Singh Marg, Jaipur–302005."
+      },
+      {
+        "serial_no": 32,
+        "state": "Sikkim",
+        "name": "Scheduled Tribes & Backward Classes Development Corporation",
+        "abbreviation": "SSCSTBCDC",
+        "address": "Bhanupath, Gangtok,, Sikkim – 737 101."
+      },
+      {
+        "serial_no": 33,
+        "state": "Tamil Nadu",
+        "name": "Housing & Development Corporation Ltd.",
+        "abbreviation": "TAHDCO",
+        "address": "No.31, Cenotaph Road, 2nd Lane,, Teynamtet, Chennai -600 018."
+      },
+      {
+        "serial_no": 34,
+        "state": "Tripura",
+        "name": "Co-op. Devp. Corpn. Ltd.",
+        "abbreviation": "TSCDC",
+        "address": "Krishna Nagar P.O. Lake Chomubani,, Agartala – 799 001"
+      },
+      {
+        "serial_no": 35,
+        "state": "Uttarakhand",
+        "name": "Evam Vikas Nigam",
+        "abbreviation": "UBVEVN",
+        "address": "Janjati Directorate, New Building,, Bhagat Singh Clolony (Adhoiwala),, Dehradun-248 001"
+      },
+      {
+        "serial_no": 36,
+        "state": "Uttar Pradesh",
+        "name": "Ltd. 10, Mall Avenue, Lucknow, Uttar",
+        "abbreviation": null,
+        "address": "Pradesh-226001."
+      },
+      {
+        "serial_no": 37,
+        "state": "Uttar Pradesh",
+        "name": "Dev. Corpn. Ltd.,",
+        "abbreviation": "UPSCFDC",
+        "address": "B-912, Sector-C, Mahanagar,, Lucknow – 226 006."
+      },
+      {
+        "serial_no": 38,
+        "state": "West Bengal",
+        "name": "Development & Finance Corporation",
+        "abbreviation": "WBSCSTOBCDFC",
+        "address": "CF 217/A/1 Salt Lake, Sector –I, (Mangolic Building), Kolkata – 700 064., Total=38, -- 3 of 3 --"
+      }
+    ]
+  },
+  "Public_Sector_Banks": {
+    "partner_type": "Public_Sector_Banks",
+    "total_partners": 11,
+    "partners": [
+      {
+        "serial_no": 1,
+        "name": "Indian Overseas Bank,",
+        "address": "Central Office,, 763, Anna Salai, Chennai,, Tamil Nadu – 600 002."
+      },
+      {
+        "serial_no": 2,
+        "name": "Bank of Baroda,",
+        "address": "Baroda Bhavan,, 7th Floor, R.C. Dutt Road,, Vadodara – 390 007 (Gujarat)"
+      },
+      {
+        "serial_no": 3,
+        "name": "Canara Bank,",
+        "address": "Head Office, 112, J.C. Road,, Bengaluru – 560 002."
+      },
+      {
+        "serial_no": 4,
+        "name": "Punjab National Bank,",
+        "address": "Plot No.-4, Sector 10,, Dwarka, New Delhi – 110 075"
+      },
+      {
+        "serial_no": 5,
+        "name": "Punjab & Sind Bank,",
+        "address": "Priority Sector Advance Department,, 5th Floor, 21 Rajendra Place,, New Delhi – 110 008"
+      },
+      {
+        "serial_no": 6,
+        "name": "Union Bank of India,",
+        "address": "Rural & Agri Business Department,, Central Office Union Bank Bhavan, Marg,Nariman Point, Mumbai – 400"
+      },
+      {
+        "serial_no": 7,
+        "name": "Indian Bank Corporate Office,",
+        "address": "No.254-260, Avvai Shanmungam Salai, Gowdi, Mutt Road,, Royapetta,, Chennai – 600 014"
+      },
+      {
+        "serial_no": 8,
+        "name": "Bank of Maharashtra",
+        "address": "Head office ‘Lok mangal’, 1501, Shivajinagar, Pune-411005, Maharashtra"
+      },
+      {
+        "serial_no": 9,
+        "name": "Bank of India,",
+        "address": "Bandra Kurla Complex, Bandra (East),, Mumbai- 400051"
+      },
+      {
+        "serial_no": 10,
+        "name": "Central bank Of India, Mumbai",
+        "address": "Chandermukhi Bldg., Nariman Point,, Mumbai – 400 021"
+      },
+      {
+        "serial_no": 11,
+        "name": "UCO Bank, Kolkata",
+        "address": "No 3&4, DD Block, Sector-1, Bidhannagar,, Kolkata, West Bengal-700064, -- 1 of 1 --"
+      }
+    ]
+  },
+  "Regional_Rural_Banks": {
+    "partner_type": "Regional_Rural_Banks",
+    "total_partners": 25,
+    "partners": [
+      {
+        "serial_no": 1,
+        "name": "Bihar Gramin Bank,",
+        "address": "Shri Vishnu Commercial Complex,, NH-30, New Bypass,, Near Bp Highway Services Petrol Pump,, Asochak, Patna - 800016"
+      },
+      {
+        "serial_no": 2,
+        "name": "Maharashtra Gramin Bank,",
+        "address": "Plot No.35, Jeewan Shri Town Centre,, CIDCO, Aurangabad,, Maharashtra – 431 003."
+      },
+      {
+        "serial_no": 3,
+        "name": "Jharkhand Gramin Bank,",
+        "address": "Zila Parishad Market Complex,, 3rd Floor, Kutchery Road,, Ranchi- 834001, Jharkhand."
+      },
+      {
+        "serial_no": 4,
+        "name": "Haryana Gramin Bank,",
+        "address": "Near Bajrang Bhawan,, Delhi Road, Rohtak, Haryana –124 001"
+      },
+      {
+        "serial_no": 5,
+        "name": "Gujarat Gramin Bank,",
+        "address": "Head Office,, Sky Line Building, 2nd Floor,, Near Shital Guest House,, Bharuch - 392001, Gujarat."
+      },
+      {
+        "serial_no": 6,
+        "name": "Telangana Grameena Bank,",
+        "address": "H.No.2-1-520, 2nd Floor,, Vijaya Sri Sai Celestia, Street No.9,, Shankermut Road, Nallakunta, Hyderabad,, Telangana – 500044."
+      },
+      {
+        "serial_no": 7,
+        "name": "Rajasthan Gramin Bank,",
+        "address": "Tulsi Tower, 9th B Road, Sardarpura, Jodhpur – 342003, (Rajasthan)"
+      },
+      {
+        "serial_no": 8,
+        "name": "Uttar Pradesh Gramin Bank,",
+        "address": "2nd & 3rd Floor, NBCC Commercial, Complex, Vardan Khand,, Gomti Nagar Extension,, Lucknow–229001(Uttar Pradesh)"
+      },
+      {
+        "serial_no": 9,
+        "name": "Kerala Grameena Bank,",
+        "address": "PB No.10, KGpB Towers, AK Road,, Uphill, Malappuram,Kerala – 676505."
+      },
+      {
+        "serial_no": 10,
+        "name": "Uttarakhand Gramin Bank,",
+        "address": "18-New Road, Dehradun, Uttarakhand."
+      },
+      {
+        "serial_no": 11,
+        "name": "Tripura Gramin Bank,",
+        "address": "H.O. Airport Road, PO Abhaynagar,, Agartala, Tripura (W) Pin – 799 005."
+      },
+      {
+        "serial_no": 12,
+        "name": "Karnataka Grameena Bank, Head Office,",
+        "address": "CA 20, Vijayanagar IInd Stage,, Musure – 570017 (Karnataka)"
+      },
+      {
+        "serial_no": 13,
+        "name": "Assam Gramin Bank,",
+        "address": "HO, G.S. Road, Bhangagarh,, Guwahati- 781 005.(Assam)"
+      },
+      {
+        "serial_no": 14,
+        "name": "Andhra Pradesh Grameena Bank,",
+        "address": "4th Floor, Raghu Mansion,, 4-1, Broadipet,, Guntur -522 002 (Andhra Pradesh)"
+      },
+      {
+        "serial_no": 15,
+        "name": "Punjab Gramin Bank,",
+        "address": "HO Jalandhar Road,, Kapurthala – 144 601. (Punjab)"
+      },
+      {
+        "serial_no": 16,
+        "name": "Tamil Nadu Grama Bank,",
+        "address": "6, Yercaud Road, Hasthasmpatti,, Salem – 636007 (Tamil Nadu)"
+      },
+      {
+        "serial_no": 17,
+        "name": "Madhaya Pradesh Gramin Bank.",
+        "address": "C21, Business Park, C21 Square opposite, Hotel Radisson Blue, MR-10, Indore- 452010, Madhaya Pradesh"
+      },
+      {
+        "serial_no": 18,
+        "name": "Himachal Pradesh Gramin Bank,",
+        "address": "Jail Road (Panjethi), PO – Talyahar, Mandi 175001 (Himachal Pradesh)"
+      },
+      {
+        "serial_no": 19,
+        "name": "Puducherry Grama Bank,",
+        "address": "No.441, Mahatma Gandhi Road,, Muthialpet, Puducherry – 605 003"
+      },
+      {
+        "serial_no": 20,
+        "name": "West Bengal Gramin Bank",
+        "address": "Natabar Paul Road, Chatterjee Para More,, Tikiapara, Howrah – 711101 (WB)"
+      },
+      {
+        "serial_no": 21,
+        "name": "Chhattisgarh Gramin Bank,",
+        "address": "Corporate Office Raipur,, Plot No.-47, Sector-24, Atal Nagar,, Nava Raipur-492013"
+      },
+      {
+        "serial_no": 22,
+        "name": "Manipur Rural Bank, Keishampat, Keisham",
+        "address": "Leikai, Imphal, Manipur 795001"
+      },
+      {
+        "serial_no": 23,
+        "name": "Meghalaya Rural Bank, \t24 J&K Grameen Bank",
+        "address": "-- 1 of 2 --, M.T.C Building, 2nd Floor, Police Bazar,, Shillong-793001, Jammu & Kashmir Near Fruit Complex,, Narwal, Jammu (J&K) -180006"
+      },
+      {
+        "serial_no": 25,
+        "name": "Odisha Grameen Bank, Bhubaneswar.",
+        "address": "7R25-H75, Jagamara, Sunderpada Road,, Gandamuda, Pokhhariput, Bhubaneshwar, -751030,Odisha"
+      },
+      {
+        "serial_no": 26,
+        "name": "Mizoram Rural Bank, Mizoram",
+        "address": "MINECO, Khatla Aizawl - 796001., -- 2 of 2 --"
+      }
+    ]
+  },
+  "NBFC_MFIs": {
+    "partner_type": "NBFC_MFIs",
+    "total_partners": 7,
+    "partners": [
+      {
+        "serial_no": 1,
+        "name": "Anik Financial Services Private Limited,",
+        "address": "Regd.Office: ‘Sahyadri Building”, Behind Amitesh Hotel,, Ambajogai Roa, Sai Naka,, Latur – 413 512"
+      },
+      {
+        "serial_no": 2,
+        "name": "Grameen Development & Finance",
+        "address": "Private Limited,, Dubjent, Kulshi Road, Chhaygaon,, Kamrup,, Assam Pin – 781 124."
+      },
+      {
+        "serial_no": 3,
+        "name": "ASA International Microfinance Ltd., Kolkata",
+        "address": "Victoria Park, 4th Floor, GN-37/2, Sector-V,, Salt Lake City,, Kolkata – 700 091, West Bengal."
+      },
+      {
+        "serial_no": 4,
+        "name": "Midland Microfin Ltd., Ludhiana",
+        "address": "The Axis, Plot No.1, R.B.Badri Dass, Colony, BMC Chowk, G.T.Road,, Jalandhar – 144 001, Punjab."
+      },
+      {
+        "serial_no": 5,
+        "name": "Satin Creditcare Network Ltdl., Gurgaon",
+        "address": "Plot No.492, Udyog Vihar, Phase-III,, Gurugram, Haryana – 122 016."
+      },
+      {
+        "serial_no": 6,
+        "name": "Pahal Financial Services Pvt. Ltd.,",
+        "address": "Ahmedabad, 7th Floor, Binori B Square-2, Opp., Hathising Ni Vadi, Ambli-Iscon Road,, Ahmedabad – 380 054, Gujarat"
+      },
+      {
+        "serial_no": 7,
+        "name": "Vector Finance PVT LTD",
+        "address": "RO-K7/110, Ground Floor, Klinga Vihar, P.S., Khandagiri, Bhubaneswar ODISHA-751029, -- 1 of 1 --"
+      }
+    ]
+  },
+  "Cooperative_Banks": {
+    "partner_type": "Cooperative_Banks",
+    "total_partners": 3,
+    "partners": [
+      {
+        "serial_no": 1,
+        "name": "Shri Mahila Sewa Sahakari Bank Ltd.",
+        "address": "Shri Mahila Sewa Sahakari Bank Ltd."
+      },
+      {
+        "serial_no": 109,
+        "name": "Sakar-II, Opp.Town Hall,",
+        "address": "Ellisbridge, Ahmedabad- 38006"
+      },
+      {
+        "serial_no": 2,
+        "name": "Konoklata mahila Urban Cooperative",
+        "address": "Bank, Assam., -- 1 of 1 --"
+      }
+    ]
+  },
+  "Other_Agencies": {
+    "partner_type": "Other_Agencies",
+    "total_partners": 3,
+    "partners": [
+      {
+        "serial_no": 1,
+        "name": "Assam \tNorth Eastern Development Finance Corporation Ltd. (NEDFi), Tea",
+        "address": "Auction Center, GS Rd, Sanket Vihar, Dispur, Opposite, Guwahati,, Assam 781006"
+      },
+      {
+        "serial_no": 2,
+        "name": "Jharkhand \tJharkhand Silk Textile & Handicraft Development Corporation Ltd.",
+        "address": "(JHARCRAFT), Jharcraft, DIC Campus Ratu Road Ranchi Jharkhand, 834001"
+      },
+      {
+        "serial_no": 3,
+        "name": "SIDBI \tSmall Industries Development Bank of India,",
+        "address": "SIDBI Tower, 15, Ashok Marg, Lucknow - 226001, Uttar Pradesh, -- 1 of 1 --"
+      }
+    ]
+  },
+  "Small_Finance_Banks": {
+    "partner_type": "Small_Finance_Banks",
+    "total_partners": 2,
+    "partners": [
+      {
+        "serial_no": 1,
+        "name": "AU small finance bank",
+        "address": "AU small finance bank"
+      },
+      {
+        "serial_no": 2,
+        "name": "Ujjiwan Small Finance Bank",
+        "address": "Small Finance Bank- 02, -- 1 of 1 --"
+      }
+    ]
+  },
+  "Cooperative_Societies": {
+    "partner_type": "Cooperative_Societies",
+    "total_partners": 2,
+    "partners": [
+      {
+        "serial_no": 1,
+        "name": "Streenidhi, Telangana , 401 & 402 , 4th",
+        "address": "Floor My Home Sarovar Plaza, Secretariat, Road Ambedkar Colony, Saifabad,, Hyderabad, Telangana 500004"
+      },
+      {
+        "serial_no": 2,
+        "name": "Streenidhi AP, 2nd Floor, NTR,",
+        "address": "Administrative \tBlock, \tRtc, Complex, Vijayawada-520013,, Andhra Pradesh, -- 1 of 1 --"
+      }
+    ]
+  }
+}
