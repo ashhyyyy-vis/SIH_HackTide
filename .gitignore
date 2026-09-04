@@ -1,0 +1,26 @@
+# Generated locator JSON files (rebuild with build_locator_dataset.js)
+scraper/output/partner_locator*.json
+scraper/output/partner_locator*.geojson
+scraper/output/partner_branches.json
+scraper/output/partner_locations*.geojson
+
+# Intermediate/debug outputs
+scraper/output/geocode_failures.json
+scraper/output/partners_for_geocode.csv
+scraper/output/rrb_branches.json
+scraper/output/rrb_branches_grouped.json
+scraper/map/
+
+# Downloaded HTML for inspection
+*.html
+
+# node_modules
+scraper/node_modules/
+
+# Empty directories
+scraper/scripts/
+
+# OS / editor
+.DS_Store
+*.swp
+*~
