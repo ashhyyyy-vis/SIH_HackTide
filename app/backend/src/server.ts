@@ -25,9 +25,10 @@ app.get('/api/tools', (_req, res) => {
 // POST /api/ai/execute  { tool: "recommend", input: { ... } }
 app.post('/api/ai/execute', async (req, res) => {
   const { tool, input } = req.body ?? {};
-  if (!tool || !TOOLS[tool]) return res.status(400).json({ error: `Unknown tool: ${tool}. Available: ${Object.keys(TOOLS).join(', ')}` });
+  const registry = TOOLS as unknown as Record<string, { fn: (i: any) => unknown; description: string }>;
+  if (!tool || !registry[tool]) return res.status(400).json({ error: `Unknown tool: ${tool}. Available: ${Object.keys(registry).join(', ')}` });
   try {
-    const fn = TOOLS[tool].fn as any;
+    const fn = registry[tool].fn as (i: any) => unknown;
     const result = await fn(input ?? {});
     res.json({ tool, result });
   } catch (e: any) {
@@ -52,23 +53,59 @@ app.post('/api/ai/agent', async (req, res) => {
   if (!state && (lower.includes(' up') || lower.includes('u.p'))) state = 'Uttar Pradesh';
   if (!state && lower.includes(' tn ')) state = 'Tamil Nadu';
 
-  // Parse income
-  const incomeMatch = lower.match(/(?:income|earning)[:\s]*₹?\s*([\d.]+)/);
-  const income = incomeMatch ? Number(incomeMatch[1].replace(/l$/i, '00000')) * 100000 : 200000;
+  // Parse money mentions — handles "₹1.5 lakh", "₹50,000", "2L", "800000", "50 thousand"
+  const moneyPerm: Array<{ n: number; i: number }> = [];
+  {
+    const re = /(?:₹|rs\.?)?\s*(\d[\d,]*(?:\.\d+)?)\s*(l|lakh|k|thousand|hundred)?/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(lower))) {
+      if (!m[1]) continue;
+      const raw = Number(m[1].replace(/,/g, ''));
+      const mult = m[2] === 'l' || m[2] === 'lakh' ? 100000
+        : m[2] === 'k' || m[2] === 'thousand' ? 1000
+        : m[2] === 'hundred' ? 100 : 1;
+      moneyPerm.push({ n: Math.round(raw * mult), i: m.index });
+    }
+  }
 
-  // Parse cost
-  const costMatch = lower.match(/(?:cost|loan|amount|₹)[:\s]*₹?\s*([\d.]+)/);
-  const cost = costMatch ? Number(costMatch[1].replace(/l$/i, '00000')) * 100000 : 50000;
+  // Income = amount that follows (or is attached to) "income"/"earning"
+  const incomeAt = lower.search(/(income|earning)\b/);
+  let income = 200000;
+  if (incomeAt >= 0) {
+    const beforeIncome = moneyPerm.filter((p) => p.i < incomeAt);
+    const next = moneyPerm.find((p) => p.i >= incomeAt);
+    income = next?.n ?? beforeIncome.at(-1)?.n ?? income;
+  }
+
+  // Cost = amount tied to the project ("cost" word, else the first non-income amount)
+  let cost = 50000;
+  const costWordAt = lower.search(/project\s+cost|cost\b/);
+  if (moneyPerm[0]) {
+    if (costWordAt >= 0) {
+      const after = moneyPerm.find((p) => p.i >= costWordAt && !(incomeAt >= 0 && (p.i >= incomeAt || moneyPerm.findIndex((q) => q.i === p.i) === moneyPerm.length - 1)));
+      cost = after?.n ?? moneyPerm[0].n;
+    } else if (incomeAt >= 0) {
+      const beforeIncome = moneyPerm.filter((p) => p.i < incomeAt);
+      cost = beforeIncome[0]?.n ?? moneyPerm[0].n;
+    } else {
+      cost = moneyPerm[0].n;
+    }
+  }
 
   // Tool 1: recommend schemes
   if (!requestedTools || requestedTools.includes('recommend')) {
-    const recResult = TOOLS.recommend.fn({ state, projectCost: cost, annualIncome: income });
+    const isEducation = /education|educational|degree|study|course|college|school/.test(lower);
+    const projectType = isEducation ? 'education' : /agriculture|farm|crop|dairy|animal/.test(lower) ? 'agriculture'
+      : /factory|manufactur|production/.test(lower) ? 'manufacturing'
+      : /service|repair|transport|trading/.test(lower) ? 'services'
+      : 'shop';
+    const recResult = TOOLS.recommend.fn({ state: state ?? undefined, projectCost: cost, projectType, annualIncome: income });
     results.push({ tool: 'recommend', result: recResult });
   }
 
   // Tool 2: nearest partners (if state found)
   if (state && (!requestedTools || requestedTools.includes('nearestPartners'))) {
-    const statesData = TOOLS.getStates.fn();
+    const statesData = TOOLS.getStates.fn() as { states: string[]; count: number };
     const matchedState = statesData.states.find((s: string) => s.toLowerCase().includes(state.toLowerCase()));
     if (matchedState) {
       // Get a sample lat/lng from locator for that state

@@ -7,7 +7,7 @@ import { toolRecommend, toolEMI, toolFindPartners, toolNearestPartners, toolSche
 
 const API = 'http://localhost:3001/api';
 
-async function call(method: string, path: string, body?: any) {
+async function call(method: string, path: string, body?: any): Promise<any> {
   const opts: any = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(`${API}${path}`, opts);

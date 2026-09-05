@@ -8,6 +8,19 @@ import { dataset, locator } from './data.js';
 export { dataset, locator } from './data.js';
 
 // ─── Tool 1: Recommend Schemes ────────────────────────────────────────────────
+function describeNational(s: any, cost: number, maxLoan: number, rate: number, tenureYears: number) {
+  const n = tenureYears * 12;
+  const emi = n > 0
+    ? (maxLoan * rate / 12 / 100 * Math.pow(1 + rate / 12 / 100, n)) / (Math.pow(1 + rate / 12 / 100, n) - 1)
+    : 0;
+  return {
+    type: 'national', name: s.name, code: s.code, rate, maxLoan: Math.round(maxLoan),
+    monthlyEMI: Math.round(emi), quarterly: Math.round(emi * 3),
+    coverage: cost > 0 ? Math.round((maxLoan / cost) * 100) : 90,
+    tenureYears, moratoriumMonths: s.moratorium_months ?? 3,
+  };
+}
+
 export function toolRecommend(input: {
   state?: string;
   projectCost: number;
@@ -20,23 +33,51 @@ export function toolRecommend(input: {
   const cost = Number(projectCost);
   const income = Number(annualIncome);
   const results: any[] = [];
+  const isEducation = (projectType ?? '').toLowerCase() === 'education';
 
-  for (const s of dataset.schemes) {
+  for (const s of dataset.schemes as any[]) {
     const marginPct = 100 - (s.max_loan_pct ?? 90);
-    const maxLoan = Math.min(cost * (1 - marginPct / 100), s.max_loan_amount ?? 50_00_000);
-    const rate = s.rate_beneficiary ?? 8;
-    const n = (s.tenure_years ?? 7) * 12;
-    const emi = (maxLoan * rate / 12 / 100 * Math.pow(1 + rate / 12 / 100, n)) /
-      (Math.pow(1 + rate / 12 / 100, n) - 1);
+    let maxLoan: number;
+    let rate: number;
+    let tenureYears: number;
+
+    if (s.code === 'ELS') {
+      if (!isEducation) continue;                       // ELS is an education-only product
+      maxLoan = Math.min(cost * (1 - marginPct / 100), (s.max_loan_amount_india ?? s.max_loan_amount ?? 50_00_000));
+      rate = s.rate_beneficiary_india_men ?? s.rate_beneficiary ?? 6.5;
+      tenureYears = s.tenure_years_not_started ?? s.tenure_years ?? 12;
+    } else {
+      if (isEducation) continue;                        // education projects only need ELS
+      maxLoan = Math.min(cost * (1 - marginPct / 100), s.max_loan_amount ?? 50_00_000);
+      rate = s.rate_beneficiary ?? 8;
+      tenureYears = s.tenure_years ?? 7;
+    }
+
+    const n = tenureYears * 12;
+    const emi = n > 0
+      ? (maxLoan * rate / 12 / 100 * Math.pow(1 + rate / 12 / 100, n)) / (Math.pow(1 + rate / 12 / 100, n) - 1)
+      : 0;
+
+    const MICRO = ['MSY', 'MCF', 'AMY'];
+    const TERM = ['SUVIDHA', 'UTKARSH'];
 
     let score = 0;
-    if (cost <= 1_40_000 && s.code.includes('MICRO')) score += 40;
-    else if (cost <= 50_00_000 && s.code.includes('TERM')) score += 40;
-    if (educationStatus && ['college', 'graduate'].includes(educationStatus) && s.code.includes('EDU')) score += 30;
+    if (isEducation && s.code === 'ELS') score += 40;
+    if (!isEducation) {
+      if (cost <= 1_40_000 && MICRO.includes(s.code)) score += 40;              // primary micro credit
+      else if (cost <= 1_40_000 && s.code === 'UNY') score += 35;               // UNY is an alt in this band
+      else if (cost > 1_40_000 && cost <= 5_00_000 && TERM.includes(s.code)) score += 40;
+      else if (cost > 1_40_000 && cost <= 5_00_000 && s.code === 'UNY') score += 35;
+      else if (cost > 5_00_000 && TERM.includes(s.code)) score += 40;           // large projects → term loan
+      // Aajeevika (15%) is a fallback — never outrank the cheaper MFS
+      if (s.code === 'AMY' && cost <= 1_40_000) score -= 5;
+    }
     if (income <= (s.income_limit ?? 5_00_000)) score += 20;
     if (income <= 50000) score += 10;
+    if (cost > (s.project_cost_max ?? 50_00_000)) score = 0;   // hard cap: above max
+    if (cost < (s.project_cost_min ?? 0)) score = 0;           // hard cap: below min band
 
-    if (score > 0) results.push({ type: 'national', name: s.name, code: s.code, rate, maxLoan: Math.round(maxLoan), monthlyEMI: Math.round(emi), quarterly: Math.round(emi * 3), coverage: Math.round((maxLoan / cost) * 100), score, tenureYears: s.tenure_years, moratoriumMonths: s.moratorium_months });
+    if (score > 0) results.push({ ...describeNational(s, cost, maxLoan, rate, tenureYears), score, moratoriumMonths: isEducation ? 12 : (s.moratorium_months ?? 6) });
   }
 
   if (state) {
@@ -45,14 +86,15 @@ export function toolRecommend(input: {
       const incomeLimit = s.income_limit;
       if (incomeLimit !== null && income > incomeLimit) continue;
       const marginPct = 100 - (s.max_loan_pct ?? 90);
-      const maxLoan = Math.min(cost * (1 - marginPct / 100), s.max_loan_amount ?? 10_00_000);
-      const rate = s.rate_beneficiary ?? 8;
+      const maxLoan = Math.min(cost * (1 - marginPct / 100), s.unit_cost_max ?? s.max_loan_amount ?? 10_00_000);
+      const rate = s.rate_beneficiary ?? s.funding?.interest_pa_beneficiary ?? 8;
       const n = (s.tenure_years ?? 5) * 12;
-      const emi = (maxLoan * rate / 12 / 100 * Math.pow(1 + rate / 12 / 100, n)) /
-        (Math.pow(1 + rate / 12 / 100, n) - 1);
+      const emi = n > 0
+        ? (maxLoan * rate / 12 / 100 * Math.pow(1 + rate / 12 / 100, n)) / (Math.pow(1 + rate / 12 / 100, n) - 1)
+        : 0;
       let score = 30;
       if (cost <= 1_40_000) score += 30; else if (cost <= 50_00_000) score += 30;
-      results.push({ type: 'state', name: s.name, code: s.code, state: s.state, rate, maxLoan: Math.round(maxLoan), monthlyEMI: Math.round(emi), quarterly: Math.round(emi * 3), coverage: Math.round((maxLoan / cost) * 100), score, incomeLimit: incomeLimit ?? 'no limit', tenureYears: s.tenure_years, moratoriumMonths: s.moratorium_months });
+      results.push({ type: 'state', name: s.name, code: s.code, state: s.state, rate, maxLoan: Math.round(maxLoan), monthlyEMI: Math.round(emi), quarterly: Math.round(emi * 3), coverage: cost > 0 ? Math.round((maxLoan / cost) * 100) : 90, score, incomeLimit: incomeLimit ?? 'no limit', tenureYears: s.tenure_years ?? 5, moratoriumMonths: s.moratorium_months ?? 0 });
     }
   }
 
@@ -63,28 +105,75 @@ export function toolRecommend(input: {
 // ─── Tool 2: Calculate EMI ────────────────────────────────────────────────────
 export function toolEMI(input: { amount: number; rate: number; tenureYears: number; moratoriumMonths?: number }) {
   const { amount, rate, tenureYears, moratoriumMonths = 0 } = input;
-  const P = Number(amount), r = Number(rate) / 12 / 100, n = Number(tenureYears) * 12, mor = Number(moratoriumMonths);
-  let principal = P + (mor > 0 ? P * r * mor : 0);
-  const emi = mor > 0 ? 0 : (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-  const quarterly = mor > 0 ? 0 : (principal * r * 3 * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-  const schedule = [];
-  let bal = principal;
-  for (let q = 1; q <= Math.ceil(n / 3) && bal > 0; q++) {
-    const interest = bal * r * 3, principalPaid = quarterly - interest;
-    bal = Math.max(0, bal - principalPaid);
-    schedule.push({ quarter: q, payment: Math.round(quarterly), principal: Math.round(principalPaid), interest: Math.round(interest), balance: Math.round(bal) });
+  const P = Number(amount), annual = Number(rate) / 100, mor = Number(moratoriumMonths);
+  const months = Number(tenureYears) * 12, quarters = Number(tenureYears) * 4;
+  const rM = annual / 12, rQ = annual / 4;
+
+  // Phase 1 — simple interest accrues during the moratorium, no payments
+  const moratoriumInterest = P * rM * mor;                 // P × R/12 × months (simple interest)
+  const inflatedPrincipal = P + moratoriumInterest;
+
+  // Phase 2 — installments computed on the inflated principal
+  const emi = months > 0
+    ? (inflatedPrincipal * rM * Math.pow(1 + rM, months)) / (Math.pow(1 + rM, months) - 1)
+    : 0;
+  const quarterly = quarters > 0
+    ? (inflatedPrincipal * rQ * Math.pow(1 + rQ, quarters)) / (Math.pow(1 + rQ, quarters) - 1)
+    : 0;
+
+  // Phase 3 — quarterly amortization of the inflated principal
+  const schedule: any[] = [];
+  let bal = inflatedPrincipal;
+  for (let q = 1; q <= quarters && bal > 1; q++) {
+    const interest = bal * rQ;
+    const principalPaid = quarterly - interest;
+    const closing = Math.max(0, bal - principalPaid);
+    schedule.push({ quarter: q, payment: Math.round(quarterly), principal: Math.round(principalPaid), interest: Math.round(interest), balance: Math.round(closing) });
+    bal = closing;
   }
-  return { principal: Math.round(principal), monthlyEMI: Math.round(emi), quarterlyInstallment: Math.round(quarterly), moratoriumMonths: mor, totalInterest: Math.round(emi * n - principal), schedule: schedule.slice(0, 28) };
+
+  return {
+    principal: Math.round(inflatedPrincipal),
+    monthlyEMI: Math.round(emi),
+    quarterlyInstallment: Math.round(quarterly),
+    moratoriumMonths: mor,
+    moratoriumInterest: Math.round(moratoriumInterest),
+    totalInterest: Math.round(quarterly * quarters - P),
+    schedule: schedule.slice(0, 40),
+  };
+}
+
+// ─── Partner Health (NPA-aware) — demo mock, deterministic per branch ─────────
+// Per-branch NPA is not public; we generate a stable pseudo-random GNPA
+// per branch drawn from the RBI/NABARD threshold bands in `npa_thresholds`.
+function hashStr(s: string) { let h = 7; for (const c of s) h = ((h * 31 + c.charCodeAt(0)) >>> 0); return h; }
+
+const NPA_THRESHOLDS = (dataset.npa_thresholds ?? {}) as Record<string, { low: number; medium: number; high: number; critical: number }>;
+
+export function enrichPartnerHealth(b: any) {
+  const key = `${b.partnerName ?? ''}|${b.branchName ?? ''}|${b.city ?? ''}|${b.partnerType}`;
+  const h = hashStr(key);
+  const type = (b.partnerType ?? 'PSB') as string;
+  const def = NPA_THRESHOLDS[type] ?? { low: 5, medium: 10, high: 15, critical: 15 };
+  const gnpa = Math.round(((h % 2000) / 2000) * def.critical * 1.5 * 100) / 100;
+  let npaStatus: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  if (gnpa >= def.critical) npaStatus = 'CRITICAL';
+  else if (gnpa >= def.high) npaStatus = 'HIGH';
+  else if (gnpa >= def.medium) npaStatus = 'MEDIUM';
+  else npaStatus = 'LOW';
+  const health = Math.max(1, Math.min(100, Math.round(100 - gnpa * 5.5)));
+  return { ...b, gnpa_ratio: gnpa, npa_status: npaStatus, health_score: health, is_eligible: npaStatus !== 'CRITICAL' };
 }
 
 // ─── Tool 3: Find Partners ───────────────────────────────────────────────────
-export function toolFindPartners(input: { state?: string; city?: string; partnerType?: string; limit?: number; offset?: number }) {
+export function toolFindPartners(input: { state?: string; city?: string; partnerType?: string; limit?: number; offset?: number; health?: boolean }) {
   let results = [...locator];
   if (input.state) results = results.filter(b => b.state?.toLowerCase() === input.state!.toLowerCase());
   if (input.city) results = results.filter(b => b.city?.toLowerCase().includes(input.city!.toLowerCase()));
   if (input.partnerType) results = results.filter(b => b.partnerType === input.partnerType);
-  const total = results.length, limit = input.limit ?? 20, offset = input.offset ?? 0;
-  return { total, count: results.slice(offset, offset + limit).length, offset, limit, branches: results.slice(offset, offset + limit) };
+  const withHealth = input.health === false ? results : results.map(enrichPartnerHealth);
+  const total = withHealth.length, limit = input.limit ?? 20, offset = input.offset ?? 0;
+  return { total, count: withHealth.slice(offset, offset + limit).length, offset, limit, branches: withHealth.slice(offset, offset + limit) };
 }
 
 // ─── Tool 4: Find Nearest Partners ──────────────────────────────────────────
@@ -94,37 +183,46 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function toolNearestPartners(input: { lat: number; lng: number; radiusKm?: number; limit?: number; state?: string }) {
+export function toolNearestPartners(input: { lat: number; lng: number; radiusKm?: number; limit?: number; state?: string; eligibleOnly?: boolean }) {
   let candidates = [...locator];
   if (input.state) candidates = candidates.filter(b => b.state?.toLowerCase() === input.state!.toLowerCase());
   const withDist = candidates
     .map(b => ({ ...b, distance_km: Math.round(haversine(Number(input.lat), Number(input.lng), b.lat, b.lng) * 10) / 10 }))
     .filter(b => b.distance_km <= (input.radiusKm ?? 50))
-    .sort((a, b) => a.distance_km - b.distance_km)
+    .map(enrichPartnerHealth)
+    .filter(b => !input.eligibleOnly || b.is_eligible)
+    .sort((a, b) => Number(b.is_eligible) - Number(a.is_eligible) || (b.health_score ?? 0) - (a.health_score ?? 0) || a.distance_km - b.distance_km)
     .slice(0, input.limit ?? 10);
   return { user: { lat: input.lat, lng: input.lng }, radius_km: input.radiusKm ?? 50, total: withDist.length, branches: withDist };
 }
 
 // ─── Tool 5: Get Scheme Details ──────────────────────────────────────────────
 export function toolSchemeDetails(code: string) {
-  const nat = dataset.schemes.find(s => s.code === code);
+  const nat = dataset.schemes.find((s: any) => s.code === code);
   if (nat) return { type: 'national', scheme: nat };
-  const st = dataset.state_schemes.find(s => s.code === code);
+  const st = dataset.state_schemes.find((s: any) => s.code === code);
   if (st) return { type: 'state', scheme: st };
   return { error: 'Scheme not found', code };
 }
 
 // ─── Tool 6: Get All Schemes ────────────────────────────────────────────────
 export function toolGetAllSchemes() {
+  const stateRate = (s: any) =>
+    s.funding?.interest_pa_beneficiary ?? s.funding?.interest_pa_women ?? s.funding?.interest_pa_men ?? null;
   return {
-    national: dataset.schemes.map(s => ({ code: s.code, name: s.name, rate: s.rate_beneficiary, maxAmount: s.max_loan_amount, tenureYears: s.tenure_years, type: 'national' })),
-    state: dataset.state_schemes.map(s => ({ code: s.code, name: s.name, state: s.state, rate: s.rate_beneficiary, maxAmount: s.max_loan_amount, incomeLimit: s.income_limit, type: 'state' })),
+    national: dataset.schemes.map((s: any) => ({ code: s.code, name: s.name, rate: s.rate_beneficiary, maxAmount: s.max_loan_amount, tenureYears: s.tenure_years, type: 'national' })),
+    state: dataset.state_schemes.map((s: any) => ({
+      code: s.code, name: s.name, state: s.state,
+      rate: stateRate(s),
+      maxAmount: s.unit_cost_max ?? s.max_loan_amount ?? null,
+      incomeLimit: s.income_limit, type: 'state',
+    })),
   };
 }
 
 // ─── Tool 7: Get States ─────────────────────────────────────────────────────
 export function toolGetStates() {
-  const states = new Set(dataset.state_schemes.map(s => s.state));
+  const states = new Set(dataset.state_schemes.map((s: any) => s.state));
   return { states: [...states].sort(), count: states.size };
 }
 
@@ -133,11 +231,11 @@ export function toolCheckCaste(caste: string) {
   const idx = dataset.sc_caste_index;
   if (!idx) return { found: false, note: 'Caste index not loaded' };
   for (const [state, castes] of Object.entries(idx.by_state as Record<string, string[]>)) {
-    if (castes.map(c => c.toLowerCase()).includes(caste.toLowerCase())) {
+    if (castes.map((c: string) => c.toLowerCase()).includes(caste.toLowerCase())) {
       return { found: true, caste, state, note: `${caste} is a recognized SC caste in ${state}` };
     }
   }
-  if (idx.generic_list.map(c => c.toLowerCase()).includes(caste.toLowerCase())) {
+  if (idx.generic_list.map((c: string) => c.toLowerCase()).includes(caste.toLowerCase())) {
     return { found: true, caste, state: 'generic', note: `${caste} is in the generic SC list` };
   }
   return { found: false, caste, note: `${caste} not found in SC caste index. May not be a recognized SC caste.` };
@@ -179,13 +277,13 @@ export function toolSchemeGraph() {
   for (const s of dataset.schemes) {
     graph[s.code] = {
       name: s.name, type: 'national', rate: s.rate_beneficiary ?? 8, maxAmount: s.max_loan_amount ?? 0,
-      relatesTo: dataset.schemes.filter(x => x.code !== s.code).map(x => x.code),
+      relatesTo: dataset.schemes.filter((x: any) => x.code !== s.code).map((x: any) => x.code),
     };
   }
   for (const s of dataset.state_schemes) {
     graph[s.code] = {
       name: s.name, type: 'state', rate: s.rate_beneficiary ?? 8, maxAmount: s.max_loan_amount ?? 0,
-      relatesTo: dataset.schemes.map(x => x.code),
+      relatesTo: dataset.schemes.map((x: any) => x.code),
     };
   }
 

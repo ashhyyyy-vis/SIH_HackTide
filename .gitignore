@@ -16,6 +16,13 @@ scraper/map/
 
 # node_modules
 scraper/node_modules/
+app/backend/node_modules/
+app/frontend/node_modules/
+
+# Build outputs
+app/backend/dist/
+app/frontend/dist/
+*.tsbuildinfo
 
 # Empty directories
 scraper/scripts/
