@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useLanguageStore } from '../store/languageStore';
 
 interface Scheme {
   id: number;
@@ -9,6 +10,7 @@ interface Scheme {
   interest_rate_max: number;
   target_category: string;
   title_i18n: any;
+  description?: string;
 }
 
 const Schemes: React.FC = () => {
@@ -16,7 +18,7 @@ const Schemes: React.FC = () => {
   const [filteredSchemes, setFilteredSchemes] = useState<Scheme[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
-  const [language, setLanguage] = useState<string>('en');
+  const { language } = useLanguageStore();
 
   useEffect(() => {
     fetchSchemes();
@@ -67,19 +69,6 @@ const Schemes: React.FC = () => {
                 <option value="SC">SC</option>
                 <option value="ST">ST</option>
                 <option value="General">General</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Language:</label>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="en">English</option>
-                <option value="hi">हि�ndi</option>
-                <option value="ta">Tamil</option>
               </select>
             </div>
           </div>

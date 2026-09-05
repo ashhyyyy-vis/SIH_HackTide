@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
+import { useLanguageStore } from '../store/languageStore';
 
 // Fix for default marker icons in Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -36,6 +37,7 @@ const PartnerMap: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [radius, setRadius] = useState(25);
   const [maxNpa, setMaxNpa] = useState(10.0);
+  const { language } = useLanguageStore();
 
   // Default location (Delhi)
   const defaultLocation = { lat: 28.6139, lng: 77.2090 };
@@ -64,7 +66,7 @@ const PartnerMap: React.FC = () => {
     if (userLocation) {
       fetchNearbyPartners();
     }
-  }, [userLocation, radius, maxNpa]);
+  }, [userLocation, radius, maxNpa, language]);
 
   const fetchNearbyPartners = async () => {
     if (!userLocation) return;
@@ -76,7 +78,8 @@ const PartnerMap: React.FC = () => {
           lat: userLocation.lat,
           lng: userLocation.lng,
           radius_km: radius,
-          max_npa: maxNpa
+          max_npa: maxNpa,
+          lang: language
         }
       });
       setPartners(response.data.partners);

@@ -3,15 +3,15 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE IF NOT EXISTS channel_partners (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name_i18n JSONB NOT NULL,
     partner_type VARCHAR(50) NOT NULL CHECK (partner_type IN ('SCA', 'PSB', 'RRB', 'NBFC')),
     location GEOGRAPHY(POINT, 4326),
     npa_percentage DECIMAL(5, 2) DEFAULT 0.00 CHECK (npa_percentage >= 0 AND npa_percentage <= 100),
     allocated_funds DECIMAL(15, 2) DEFAULT 0.00,
     utilized_funds DECIMAL(15, 2) DEFAULT 0.00,
-    address TEXT,
-    district VARCHAR(100),
-    state VARCHAR(100),
+    address_i18n JSONB,
+    district_i18n JSONB,
+    state_i18n JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

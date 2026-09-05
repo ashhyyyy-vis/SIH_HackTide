@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import partnerRoutes from './routes/partners';
 import schemeRoutes from './routes/schemes';
+import translateRoutes from './routes/translate';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/schemes', schemeRoutes);
+app.use('/api/translate', translateRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS schemes (
     id SERIAL PRIMARY KEY,
     title_i18n JSONB NOT NULL,
+    description_i18n JSONB,
     max_amount DECIMAL(15, 2) NOT NULL,
     interest_rate_min DECIMAL(5, 2) NOT NULL,
     interest_rate_max DECIMAL(5, 2) NOT NULL,
