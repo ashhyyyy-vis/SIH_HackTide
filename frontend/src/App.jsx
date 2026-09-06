@@ -2,6 +2,8 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { LANGS, t } from "./i18n";
 import { api, emiQuarters, partnersForState, projectTypeFor, adaptRecommendation, adaptPartner, currentPosition } from "./api";
 import AIChat from "./components/AIChat";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
 
 /* ============================================================
    SC LOAN SAHAYAK — PS92 Smart Loan/Scheme Access Platform
@@ -412,86 +414,208 @@ const TabPills = ({ tabs, active, onPick, lang = 0 }) => (
   </div>
 );
 
-/* Mini-map that plots partners at their true relative positions.
-   The previous version spaced pins by array index (left: 20 + i*26 %),
-   which pushed everything past the 5th partner outside the box and bore
-   no relation to where the branches actually are. This projects real
-   lat/lng into the frame, keeping the layout honest. */
-const PartnerMiniMap = ({ partners, anchor, selPartner, setSelPartner, lang }) => {
-  const pts = partners.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+/* Custom marker icons using emoji to match the original design */
+const createEmojiIcon = (emoji, size = 30, active = false) => {
+  return L.divIcon({
+    html: `<div style="
+      font-size: ${active ? size * 1.4 : size}px;
+      line-height: 1;
+      filter: ${active ? 'drop-shadow(0 4px 6px rgba(0,0,0,.35))' : 'none'};
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    ">${emoji}</div>`,
+    className: 'emoji-marker',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size],
+  });
+};
 
-  const box = useMemo(() => {
+/* Component to auto-fit map bounds to show all markers */
+const MapBounds = ({ bounds }) => {
+  const map = useMap();
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!map || !bounds) return;
+    
+    // Only fit bounds after map is fully initialized
+    if (!initialized) {
+      setInitialized(true);
+      // Small delay to ensure map is ready
+      setTimeout(() => {
+        try {
+          map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+        } catch (e) {
+          console.warn('Map bounds fit failed:', e);
+        }
+      }, 100);
+    }
+  }, [bounds, map, initialized]);
+
+  return null;
+};
+
+/* Full-featured map using Leaflet with OpenStreetMap tiles */
+const PartnerMiniMap = ({ partners, anchor, selPartner, setSelPartner, lang }) => {
+  const [mapError, setMapError] = useState(null);
+
+  // Calculate relative positions for partners without lat/lng
+  const pts = useMemo(() => {
+    try {
+      // Limit to first 50 partners to prevent overload
+      const limitedPartners = partners.slice(0, 50);
+      return limitedPartners.map((p) => {
+        // If partner has valid lat/lng, use them
+        if (Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+          return { ...p, calculatedLat: p.lat, calculatedLng: p.lng };
+        }
+        // If partner has distance but no coordinates, calculate relative position
+        if (anchor && p.km != null) {
+          // Place partners at random angles around the user at their distance
+          // Use a deterministic hash of the partner ID for consistent positioning
+          const hash = p.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const angle = (hash % 360) * (Math.PI / 180);
+          // Convert km to approximate degrees (rough approximation)
+          const kmToDeg = 1 / 111; // ~111km per degree
+          const latOffset = Math.cos(angle) * p.km * kmToDeg;
+          const lngOffset = Math.sin(angle) * p.km * kmToDeg;
+          return {
+            ...p,
+            calculatedLat: anchor.lat + latOffset,
+            calculatedLng: anchor.lng + lngOffset,
+            isApproximate: true,
+          };
+        }
+        return null;
+      }).filter(Boolean);
+    } catch (e) {
+      console.error('Error calculating partner positions:', e);
+      setMapError('Failed to calculate partner positions');
+      return [];
+    }
+  }, [partners, anchor]);
+
+  // Calculate bounds for auto-fitting the map
+  const bounds = useMemo(() => {
     const all = [...pts, ...(anchor ? [anchor] : [])];
     if (all.length === 0) return null;
-    const lats = all.map((p) => p.lat);
-    const lngs = all.map((p) => p.lng);
-    // pad so nothing sits exactly on the edge; guard the single-point case
-    const padLat = Math.max((Math.max(...lats) - Math.min(...lats)) * 0.15, 0.05);
-    const padLng = Math.max((Math.max(...lngs) - Math.min(...lngs)) * 0.15, 0.05);
-    return {
-      minLat: Math.min(...lats) - padLat, maxLat: Math.max(...lats) + padLat,
-      minLng: Math.min(...lngs) - padLng, maxLng: Math.max(...lngs) + padLng,
-    };
+    const lats = all.map((p) => p.calculatedLat);
+    const lngs = all.map((p) => p.calculatedLng);
+    return [
+      [Math.min(...lats), Math.min(...lngs)],
+      [Math.max(...lats), Math.max(...lngs)],
+    ];
   }, [pts, anchor]);
 
-  const project = (lat, lng) => {
-    if (!box) return { left: "50%", top: "50%" };
-    const x = ((lng - box.minLng) / (box.maxLng - box.minLng)) * 100;
-    const y = (1 - (lat - box.minLat) / (box.maxLat - box.minLat)) * 100;
-    // clamp so a pin never clips through the frame
-    return { left: `${Math.min(94, Math.max(6, x))}%`, top: `${Math.min(92, Math.max(8, y))}%` };
-  };
+  // Default center (India) if no points
+  const defaultCenter = anchor ? [anchor.lat, anchor.lng] : [20.5937, 78.9629];
+  const defaultZoom = anchor ? 10 : 5;
 
-  return (
-    <Card pad={0} style={{ overflow: "hidden" }}>
-      <div style={{ height: 320, background: "linear-gradient(160deg,#E4EFE6 0%,#D8E5F3 100%)", position: "relative" }}>
-        <div style={{ position: "absolute", inset: 0, opacity: 0.5, backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 39px,#C4D0DF 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,#C4D0DF 40px)" }} />
+  if (mapError) {
+    return (
+      <Card pad={0} style={{ overflow: "hidden" }}>
+        <div style={{
+          height: 320, display: "grid", placeItems: "center",
+          fontSize: 13.5, color: T.slate, textAlign: "center", padding: 20,
+        }}>
+          {t("Map error: {error}", lang, { error: mapError })}
+        </div>
+        <div style={{ padding: "12px 16px", fontSize: 13.5, color: T.slate }}>
+          {t("Showing {count} partners in list view instead.", lang, { count: partners.length })}
+        </div>
+      </Card>
+    );
+  }
 
+  if (pts.length === 0 && !anchor) {
+    return (
+      <Card pad={0} style={{ overflow: "hidden" }}>
+        <div style={{
+          height: 320, display: "grid", placeItems: "center",
+          fontSize: 13.5, color: T.slate, textAlign: "center", padding: 20,
+        }}>
+          {t("No mappable partners for this state yet.", lang)}
+        </div>
+        <div style={{ padding: "12px 16px", fontSize: 13.5, color: T.slate }}>
+          {t("Tap a pin or a partner card to highlight it.", lang)}
+        </div>
+      </Card>
+    );
+  }
+
+  try {
+    return (
+      <Card pad={0} style={{ overflow: "hidden" }}>
+        <MapContainer
+          center={defaultCenter}
+          zoom={defaultZoom}
+          style={{ height: 320, width: "100%" }}
+          zoomControl={true}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapBounds bounds={bounds} />
+
+        {/* User's location anchor */}
         {anchor && (
-          <div title={t("You are here", lang)} style={{
-            position: "absolute", ...project(anchor.lat, anchor.lng),
-            transform: "translate(-50%,-50%)", fontSize: 18, zIndex: 2,
-          }}>&#128309;</div>
+          <Marker
+            position={[anchor.lat, anchor.lng]}
+            icon={createEmojiIcon("🆗", 24)}
+          >
+            <Popup>{t("You are here", lang)}</Popup>
+          </Marker>
         )}
 
+        {/* Partner markers */}
         {pts.map((p) => {
           const active = selPartner && selPartner.id === p.id;
           return (
-            <button
+            <Marker
               key={p.id}
-              onClick={() => setSelPartner(active ? null : p)}
-              title={`${p.name}${p.km != null ? ` — ${p.km} km` : ""}`}
-              aria-label={p.name}
-              style={{
-                position: "absolute", ...project(p.lat, p.lng),
-                transform: "translate(-50%,-100%)",
-                background: "none", border: "none", padding: 0, cursor: "pointer",
-                fontSize: active ? 30 : 21, lineHeight: 1,
-                zIndex: active ? 3 : 1,
-                filter: active ? "drop-shadow(0 4px 6px rgba(0,0,0,.35))" : "none",
+              position={[p.calculatedLat, p.calculatedLng]}
+              icon={createEmojiIcon(p.isApproximate ? "📍" : "📍", 30, active)}
+              eventHandlers={{
+                click: () => setSelPartner(active ? null : p),
               }}
-            >&#128205;</button>
+            >
+              <Popup>
+                <div style={{ minWidth: 150 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{p.name}</div>
+                  {p.km != null && <div style={{ fontSize: 13, color: T.slate }}>{p.km} km</div>}
+                  {p.health != null && <div style={{ fontSize: 13, color: T.slate }}>{t("Health", lang)}: {p.health}/100</div>}
+                  {p.isApproximate && <div style={{ fontSize: 11, color: T.slate, fontStyle: "italic", marginTop: 4 }}>{t("Approximate location based on distance", lang)}</div>}
+                </div>
+              </Popup>
+            </Marker>
           );
         })}
-
-        {pts.length === 0 && (
-          <div style={{
-            position: "absolute", inset: 0, display: "grid", placeItems: "center",
-            fontSize: 13.5, color: T.slate, textAlign: "center", padding: 20,
-          }}>{t("No mappable partners for this state yet.", lang)}</div>
-        )}
-
-        <div style={{ position: "absolute", bottom: 8, left: 10, fontSize: 11.5, color: T.slate, background: "#ffffffcc", borderRadius: 6, padding: "3px 8px" }}>
-          {t("Approximate positions — not to scale", lang)}
-        </div>
-      </div>
+      </MapContainer>
       <div style={{ padding: "12px 16px", fontSize: 13.5, color: T.slate }}>
         {selPartner
           ? <><b style={{ color: T.ink }}>{selPartner.name}</b> · {selPartner.km} {t("km", lang)}{selPartner.health != null ? <> · {t("Health", lang)} {selPartner.health}/100</> : null}</>
           : t("Tap a pin or a partner card to highlight it.", lang)}
       </div>
     </Card>
-  );
+    );
+  } catch (e) {
+    console.error('Map rendering error:', e);
+    setMapError('Failed to render map');
+    return (
+      <Card pad={0} style={{ overflow: "hidden" }}>
+        <div style={{
+          height: 320, display: "grid", placeItems: "center",
+          fontSize: 13.5, color: T.slate, textAlign: "center", padding: 20,
+        }}>
+          {t("Map error: {error}", lang, { error: 'Rendering failed' })}
+        </div>
+        <div style={{ padding: "12px 16px", fontSize: 13.5, color: T.slate }}>
+          {t("Showing {count} partners in list view instead.", lang, { count: partners.length })}
+        </div>
+      </Card>
+    );
+  }
 };
 
 /* card with the left green rule used across myScheme listings */
