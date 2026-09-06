@@ -1,0 +1,33 @@
+/* ---- global reset · myScheme-style government portal shell ---- */
+:root {
+  --sans: 'Segoe UI', system-ui, -apple-system, Roboto, 'Noto Sans',
+    'Noto Sans Devanagari', 'Noto Sans Kannada', 'Noto Sans Tamil',
+    'Noto Sans Telugu', 'Noto Sans Bengali', 'Noto Sans Gujarati', sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  background: #ffffff;
+}
+
+#root { width: 100%; }
+
+h1, h2, h3 {
+  font-family: var(--sans);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+p { margin: 0; }
+
+img { max-width: 100%; }
