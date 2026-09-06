@@ -118,7 +118,7 @@ const PartnerMap: React.FC = () => {
   const createCustomIcon = (isEligible: boolean) => {
     return L.divIcon({
       className: 'custom-marker',
-      html: `<div style="background-color: ${isEligible ? '#22c55e' : '#9ca3af'}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+      html: `<div style="background-color: ${isEligible ? 'var(--success)' : 'var(--n-300)'}; width: 30px; height: 30px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
       iconSize: [30, 30],
       iconAnchor: [15, 30]
     });
@@ -130,7 +130,7 @@ const PartnerMap: React.FC = () => {
     useEffect(() => {
       if (route && route.coordinates) {
         const latLngs = route.coordinates.map((coord: any) => [coord[1], coord[0]]);
-        const polyline = L.polyline(latLngs, { color: '#3b82f6', weight: 5 }).addTo(map);
+        const polyline = L.polyline(latLngs, { color: 'var(--primary-600)', weight: 5 }).addTo(map);
         map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
         
         return () => {
@@ -144,29 +144,47 @@ const PartnerMap: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col">
-      <div className="bg-white p-4 shadow-md z-10">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Nearby Channel Partners</h2>
+      <div style={{ background: 'var(--bg-surface)', padding: 'var(--s4)', boxShadow: 'var(--shadow-sm)', zIndex: 10 }}>
+        <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--n-900)', marginBottom: 'var(--s4)' }}>Nearby Channel Partners</h2>
         
-        <div className="flex flex-wrap gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Radius (km):</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--s3)', marginBottom: 'var(--s4)' }}>
+          <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 'var(--s2)' }}>
+            <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--n-700)' }}>Radius (km):</label>
             <input
               type="number"
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
-              className="w-20 px-2 py-1 border border-gray-300 rounded"
+              style={{
+                width: '80px',
+                height: 'var(--tap)',
+                border: '1px solid var(--n-300)',
+                borderRadius: 'var(--r-md)',
+                background: 'var(--n-0)',
+                color: 'var(--n-900)',
+                padding: '0 var(--s3)',
+                fontSize: '16px'
+              }}
               min="1"
               max="100"
             />
           </div>
           
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Max NPA (%):</label>
+          <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 'var(--s2)' }}>
+            <label style={{ fontSize: '14px', fontWeight: 500, color: 'var(--n-700)' }}>Max NPA (%):</label>
             <input
               type="number"
               value={maxNpa}
               onChange={(e) => setMaxNpa(Number(e.target.value))}
-              className="w-20 px-2 py-1 border border-gray-300 rounded"
+              style={{
+                width: '80px',
+                height: 'var(--tap)',
+                border: '1px solid var(--n-300)',
+                borderRadius: 'var(--r-md)',
+                background: 'var(--n-0)',
+                color: 'var(--n-900)',
+                padding: '0 var(--s3)',
+                fontSize: '16px'
+              }}
               min="0"
               max="100"
               step="0.1"
@@ -175,19 +193,36 @@ const PartnerMap: React.FC = () => {
           
           <button
             onClick={fetchNearbyPartners}
-            className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 transition"
+            className="btn btn-primary"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 'var(--s2)',
+              height: 'var(--tap)',
+              padding: '0 20px',
+              minWidth: '120px',
+              borderRadius: 'var(--r-md)',
+              fontSize: '16px',
+              fontWeight: 600,
+              lineHeight: 1.2,
+              border: '1.5px solid transparent',
+              cursor: 'pointer',
+              background: 'var(--primary-600)',
+              color: 'var(--n-0)'
+            }}
           >
             Search
           </button>
         </div>
 
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+        <div style={{ display: 'flex', gap: 'var(--s3)', fontSize: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s2)' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'var(--success)' }}></div>
             <span>Eligible Partner</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-gray-400 rounded-full"></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--s2)' }}>
+            <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'var(--n-300)' }}></div>
             <span>Ineligible Partner</span>
           </div>
         </div>
@@ -221,14 +256,14 @@ const PartnerMap: React.FC = () => {
                 }}
               >
                 <Popup>
-                  <div className="p-2">
-                    <h3 className="font-bold text-lg">{partner.name}</h3>
-                    <p className="text-sm text-gray-600">{partner.partner_type}</p>
-                    <p className="text-sm">{partner.address}, {partner.district}</p>
-                    <p className="text-sm">Distance: {partner.distance_km.toFixed(2)} km</p>
-                    <p className="text-sm">NPA: {partner.npa_percentage}%</p>
+                  <div style={{ padding: '8px' }}>
+                    <h3 style={{ fontWeight: 600, fontSize: '18px', color: 'var(--n-900)' }}>{partner.name}</h3>
+                    <p style={{ fontSize: '14px', color: 'var(--n-700)' }}>{partner.partner_type}</p>
+                    <p style={{ fontSize: '14px', color: 'var(--n-700)' }}>{partner.address}, {partner.district}</p>
+                    <p style={{ fontSize: '14px', color: 'var(--n-700)' }}>Distance: {partner.distance_km.toFixed(2)} km</p>
+                    <p style={{ fontSize: '14px', color: 'var(--n-700)' }}>NPA: {partner.npa_percentage}%</p>
                     {!partner.is_eligible && (
-                      <p className="text-sm text-red-600 font-semibold mt-2">
+                      <p style={{ fontSize: '14px', color: 'var(--error-text)', fontWeight: 600, marginTop: '8px' }}>
                         Currently ineligible due to high NPA defaults
                       </p>
                     )}
@@ -243,10 +278,10 @@ const PartnerMap: React.FC = () => {
         )}
 
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading partners...</p>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.75)' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '3px solid var(--primary-600)', borderTopColor: 'transparent', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
+              <p style={{ marginTop: '16px', color: 'var(--n-700)' }}>Loading partners...</p>
             </div>
           </div>
         )}

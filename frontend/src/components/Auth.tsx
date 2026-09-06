@@ -56,20 +56,20 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-      <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
-          Financial Inclusion Portal
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-page)' }}>
+      <div className="w-full max-w-md p-8" style={{ background: 'var(--bg-surface)', border: '1px solid var(--n-200)', borderRadius: 'var(--r-lg)', boxShadow: 'var(--shadow-sm)' }}>
+        <h1 className="text-center mb-2" style={{ fontSize: '24px', fontWeight: 700, color: 'var(--n-900)' }}>
+          SC Loan Sahayak
         </h1>
-        <p className="text-center text-gray-600 mb-8">
+        <p className="text-center mb-8" style={{ color: 'var(--n-700)', fontSize: '16px' }}>
           Find nearby channel partners and government schemes
         </p>
 
         {!otpSent ? (
-          <form onSubmit={handleSendOtp} className="space-y-6">
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
+          <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="field">
+              <label htmlFor="phone" style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: 'var(--n-700)', marginBottom: '6px' }}>
+                Phone Number <span style={{ color: 'var(--error)' }}>(required)</span>
               </label>
               <input
                 type="tel"
@@ -77,32 +77,66 @@ const Auth: React.FC = () => {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="Enter your phone number"
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{
+                  width: '100%',
+                  height: 'var(--tap)',
+                  border: '1px solid var(--n-300)',
+                  borderRadius: 'var(--r-md)',
+                  background: 'var(--n-0)',
+                  color: 'var(--n-900)',
+                  padding: '0 var(--s3)',
+                  fontSize: '16px'
+                }}
                 required
                 pattern="[0-9]{10}"
                 maxLength={10}
               />
+              <p className="hint" style={{ fontSize: '14px', color: 'var(--n-500)', marginTop: '6px' }}>
+                Enter your 10-digit mobile number
+              </p>
             </div>
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', background: 'var(--error-tint)', borderLeft: '4px solid var(--error)', borderRadius: 'var(--r-md)', padding: '12px 16px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: '16px', height: '16px', color: 'var(--error-text)', flex: 'none', marginTop: '3px' }}>
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M12 8v5M12 16h.01"/>
+                </svg>
+                <span style={{ fontSize: '14px', color: 'var(--error-text)' }}>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="btn btn-primary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--s2)',
+                height: 'var(--tap)',
+                padding: '0 20px',
+                minWidth: '120px',
+                borderRadius: 'var(--r-md)',
+                fontSize: '16px',
+                fontWeight: 600,
+                lineHeight: 1.2,
+                border: '1.5px solid transparent',
+                cursor: 'pointer',
+                background: 'var(--primary-600)',
+                color: 'var(--n-0)',
+                width: '100%'
+              }}
             >
               {loading ? 'Sending OTP...' : 'Send OTP'}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
-            <div>
-              <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
-                Enter OTP
+          <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="field">
+              <label htmlFor="otp" style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: 'var(--n-700)', marginBottom: '6px' }}>
+                Enter OTP <span style={{ color: 'var(--error)' }}>(required)</span>
               </label>
               <input
                 type="text"
@@ -110,26 +144,59 @@ const Auth: React.FC = () => {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 placeholder="Enter 6-digit OTP"
-                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl tracking-widest"
+                style={{
+                  width: '100%',
+                  height: 'var(--tap)',
+                  border: '1px solid var(--n-300)',
+                  borderRadius: 'var(--r-md)',
+                  background: 'var(--n-0)',
+                  color: 'var(--n-900)',
+                  padding: '0 var(--s3)',
+                  fontSize: '16px',
+                  textAlign: 'center',
+                  letterSpacing: '0.5em'
+                }}
                 required
                 pattern="[0-9]{6}"
                 maxLength={6}
               />
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="hint" style={{ fontSize: '14px', color: 'var(--n-500)', marginTop: '6px' }}>
                 OTP sent to {phoneNumber}
               </p>
             </div>
 
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', background: 'var(--error-tint)', borderLeft: '4px solid var(--error)', borderRadius: 'var(--r-md)', padding: '12px 16px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ width: '16px', height: '16px', color: 'var(--error-text)', flex: 'none', marginTop: '3px' }}>
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M12 8v5M12 16h.01"/>
+                </svg>
+                <span style={{ fontSize: '14px', color: 'var(--error-text)' }}>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="btn btn-primary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--s2)',
+                height: 'var(--tap)',
+                padding: '0 20px',
+                minWidth: '120px',
+                borderRadius: 'var(--r-md)',
+                fontSize: '16px',
+                fontWeight: 600,
+                lineHeight: 1.2,
+                border: '1.5px solid transparent',
+                cursor: 'pointer',
+                background: 'var(--primary-600)',
+                color: 'var(--n-0)',
+                width: '100%'
+              }}
             >
               {loading ? 'Verifying...' : 'Verify OTP'}
             </button>
@@ -141,14 +208,32 @@ const Auth: React.FC = () => {
                 setOtp('');
                 setError('');
               }}
-              className="w-full text-gray-600 py-2 hover:text-gray-800 transition"
+              className="btn btn-tertiary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--s2)',
+                height: 'var(--tap)',
+                padding: '0 var(--s3)',
+                minWidth: 0,
+                borderRadius: 'var(--r-md)',
+                fontSize: '16px',
+                fontWeight: 600,
+                lineHeight: 1.2,
+                border: '1.5px solid transparent',
+                cursor: 'pointer',
+                background: 'transparent',
+                color: 'var(--primary-600)',
+                width: '100%'
+              }}
             >
               Change Phone Number
             </button>
           </form>
         )}
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center" style={{ marginTop: '24px', fontSize: '14px', color: 'var(--n-500)' }}>
           <p>Development Mode: OTP will be logged to console</p>
         </div>
       </div>
