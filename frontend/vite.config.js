@@ -5,12 +5,17 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // The PS92 backend (app/backend) listens on 3001. Proxying keeps the
-    // frontend origin-relative, so no CORS and no hardcoded host in the client.
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:5000',
         changeOrigin: true,
+        secure: false,
+      },
+      '/health': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
       },
     },
   },

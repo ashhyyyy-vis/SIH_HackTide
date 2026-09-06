@@ -19,15 +19,23 @@ class ApiError extends Error {
 }
 
 async function get(path) {
-  const r = await fetch(`${API}${path}`);
+  const token = localStorage.getItem('auth_token');
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  
+  const r = await fetch(`${API}${path}`, { headers });
   if (!r.ok) throw new ApiError(r.status, r.statusText, path);
   return r.json();
 }
 
 async function post(path, body) {
+  const token = localStorage.getItem('auth_token');
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  
   const r = await fetch(`${API}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
   if (!r.ok) throw new ApiError(r.status, r.statusText, path);
@@ -43,15 +51,23 @@ const qs = (params) =>
 export const api = {
   health: () => get("/health"),
   states: () => get("/states"),
-  schemes: () => get("/schemes"),
-  schemeDetails: (code) => get(`/schemes/${encodeURIComponent(code)}`),
+  schemes: (params) => get(`/schemes?${qs(params)}`),
+  schemeDetails: (id) => get(`/schemes/${encodeURIComponent(id)}`),
   recommend: (input) => post("/recommend", input),
   emi: (input) => post("/emi", input),
   partners: (params) => get(`/partners?${qs(params)}`),
-  nearest: (params) => get(`/partners/nearest?${qs(params)}`),
+  nearest: (params) => get(`/partners/nearby?${qs(params)}`),
   fund: (state) => get(`/fund/${encodeURIComponent(state)}`),
   caste: (caste) => get(`/caste/${encodeURIComponent(caste)}`),
   agent: (goal) => post("/ai/agent", { goal }),
+  sendOtp: (phone) => post("/auth/send-otp", { phone_number: phone }),
+  verifyOtp: (phone, otp) => post("/auth/verify-otp", { phone_number: phone, otp }),
+  me: () => get("/auth/me"),
+  translate: (text, targetLanguage, sourceLanguage) => post("/translate", { text, targetLanguage, sourceLanguage }),
+  logout: () => {
+    localStorage.removeItem('auth_token');
+    return Promise.resolve({ success: true });
+  },
 };
 
 /* ---------------- contract adapters ----------------
