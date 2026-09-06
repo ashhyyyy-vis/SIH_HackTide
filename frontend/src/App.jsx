@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { LANGS, t } from "./i18n";
 import { api, emiQuarters, partnersForState, projectTypeFor, adaptRecommendation, adaptPartner, currentPosition } from "./api";
+import AIChat from "./components/AIChat";
 
 /* ============================================================
    SC LOAN SAHAYAK — PS92 Smart Loan/Scheme Access Platform
@@ -42,6 +43,11 @@ const CSS = `
   .msFloat:hover { transform: scale(1.06); }
   .msLink { color: inherit; text-decoration: none; }
   .msLink:hover { text-decoration: underline; }
+
+  /* typing indicator in the AI chat panel */
+  .msDot { display: inline-block; animation: msBlink 1s infinite ease-in-out; }
+  @keyframes msBlink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .msDot { animation: none; opacity: .6; } }
 `;
 
 const INCOME_CAP = 500000;
@@ -124,23 +130,50 @@ const DemoNote = ({ lang = 0 }) => (
   </div>
 );
 
-const JourneyRail = ({ step, lang = 0 }) => {
+/* Each rail step maps to the page it represents, so the rail doubles as a
+   breadcrumb you can click. Steps you have not reached yet stay inert —
+   jumping to "Why" before answering the wizard would land on an empty page. */
+const RAIL_PAGES = ["state", "rec1", "result", "calc", "partners"];
+
+const JourneyRail = ({ step, lang = 0, go, reachable }) => {
   const steps = [["🏛️", "State"], ["📋", "Scheme"], ["💡", "Why"], ["🧮", "Repayment"], ["📍", "Partner"]];
+  const canVisit = (i) => {
+    if (!go) return false;
+    if (i === step) return false;                 // already here
+    if (typeof reachable === "function") return reachable(i);
+    return i < step;                              // default: only go back
+  };
+
   return (
-    <div style={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
-      {steps.map(([ic, s], i) => (
-        <React.Fragment key={s}>
-          <div style={{
-            fontSize: 12.5, fontWeight: i === step ? 800 : 600, padding: "6px 13px", borderRadius: 999,
-            background: i === step ? `linear-gradient(180deg, ${T.navy}, ${T.navyDeep})` : i < step ? T.greenBg : "#fff",
-            color: i === step ? "#fff" : i < step ? T.green : T.slate,
-            border: `1.5px solid ${i === step ? T.navyDeep : i < step ? "#B7DCC4" : T.border}`,
-            boxShadow: i === step ? "0 3px 8px rgba(14,92,43,.25)" : "none",
-          }}>{i < step ? "✓" : ic} {t(s, lang)}</div>
-          {i < steps.length - 1 && <div style={{ width: 14, height: 2, background: i < step ? T.green : T.border, borderRadius: 2 }} />}
-        </React.Fragment>
-      ))}
-    </div>
+    <nav aria-label={t("Progress", lang)} style={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
+      {steps.map(([ic, label], i) => {
+        const active = i === step;
+        const done = i < step;
+        const clickable = canVisit(i);
+        const style = {
+          fontSize: 12.5, fontWeight: active ? 800 : 600, padding: "6px 13px", borderRadius: 999,
+          background: active ? `linear-gradient(180deg, ${T.navy}, ${T.navyDeep})` : done ? T.greenBg : "#fff",
+          color: active ? "#fff" : done ? T.green : T.slate,
+          border: `1.5px solid ${active ? T.navyDeep : done ? "#B7DCC4" : T.border}`,
+          boxShadow: active ? "0 3px 8px rgba(14,92,43,.25)" : "none",
+          fontFamily: "inherit",
+          cursor: clickable ? "pointer" : "default",
+        };
+        return (
+          <React.Fragment key={label}>
+            {clickable ? (
+              <button type="button" className="msTab" onClick={() => go(RAIL_PAGES[i])} style={style}
+                aria-label={`${t("Back to", lang)} ${t(label, lang)}`}>
+                {done ? "✓" : ic} {t(label, lang)}
+              </button>
+            ) : (
+              <div style={style} aria-current={active ? "step" : undefined}>{done ? "✓" : ic} {t(label, lang)}</div>
+            )}
+            {i < steps.length - 1 && <div style={{ width: 14, height: 2, background: done ? T.green : T.border, borderRadius: 2 }} />}
+          </React.Fragment>
+        );
+      })}
+    </nav>
   );
 };
 
@@ -306,7 +339,7 @@ const Header = ({ lang, setLang, state, go, setState, catalogue }) => (
 );
 
 /* floating chrome — accessibility + help bubble, as on myScheme */
-const FloatingChrome = ({ go, lang = 0 }) => (
+const FloatingChrome = ({ lang = 0, onOpenCalculator, onFindPartners }) => (
   <>
     <button className="msFloat" title={t("Accessibility options", lang)} aria-label={t("Accessibility options", lang)}
       onClick={() => { document.body.style.zoom = document.body.style.zoom === "1.15" ? "" : "1.15"; }}
@@ -315,13 +348,10 @@ const FloatingChrome = ({ go, lang = 0 }) => (
         borderRadius: "10px 0 0 10px", border: "none", background: "#5A45E0", color: "#fff",
         fontSize: 21, cursor: "pointer", boxShadow: "0 4px 14px rgba(90,69,224,.35)",
       }}>&#9855;</button>
-    <button className="msFloat" title={t("Help", lang)} aria-label={t("Help", lang)}
-      onClick={() => go("landing")}
-      style={{
-        position: "fixed", right: 22, bottom: 22, zIndex: 25, width: 58, height: 58,
-        borderRadius: 999, border: "none", background: T.green, color: "#fff", fontSize: 26,
-        cursor: "pointer", boxShadow: "0 8px 22px rgba(14,92,43,.35)",
-      }}>&#129302;</button>
+    {/* The floating assistant lives in components/AIChat.jsx and owns
+        this corner now; it replaces the placeholder button that used to
+        sit here and merely navigate home. */}
+    <AIChat T={T} lang={lang} onOpenCalculator={onOpenCalculator} onFindPartners={onFindPartners} />
   </>
 );
 
@@ -382,6 +412,88 @@ const TabPills = ({ tabs, active, onPick, lang = 0 }) => (
   </div>
 );
 
+/* Mini-map that plots partners at their true relative positions.
+   The previous version spaced pins by array index (left: 20 + i*26 %),
+   which pushed everything past the 5th partner outside the box and bore
+   no relation to where the branches actually are. This projects real
+   lat/lng into the frame, keeping the layout honest. */
+const PartnerMiniMap = ({ partners, anchor, selPartner, setSelPartner, lang }) => {
+  const pts = partners.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+
+  const box = useMemo(() => {
+    const all = [...pts, ...(anchor ? [anchor] : [])];
+    if (all.length === 0) return null;
+    const lats = all.map((p) => p.lat);
+    const lngs = all.map((p) => p.lng);
+    // pad so nothing sits exactly on the edge; guard the single-point case
+    const padLat = Math.max((Math.max(...lats) - Math.min(...lats)) * 0.15, 0.05);
+    const padLng = Math.max((Math.max(...lngs) - Math.min(...lngs)) * 0.15, 0.05);
+    return {
+      minLat: Math.min(...lats) - padLat, maxLat: Math.max(...lats) + padLat,
+      minLng: Math.min(...lngs) - padLng, maxLng: Math.max(...lngs) + padLng,
+    };
+  }, [pts, anchor]);
+
+  const project = (lat, lng) => {
+    if (!box) return { left: "50%", top: "50%" };
+    const x = ((lng - box.minLng) / (box.maxLng - box.minLng)) * 100;
+    const y = (1 - (lat - box.minLat) / (box.maxLat - box.minLat)) * 100;
+    // clamp so a pin never clips through the frame
+    return { left: `${Math.min(94, Math.max(6, x))}%`, top: `${Math.min(92, Math.max(8, y))}%` };
+  };
+
+  return (
+    <Card pad={0} style={{ overflow: "hidden" }}>
+      <div style={{ height: 320, background: "linear-gradient(160deg,#E4EFE6 0%,#D8E5F3 100%)", position: "relative" }}>
+        <div style={{ position: "absolute", inset: 0, opacity: 0.5, backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 39px,#C4D0DF 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,#C4D0DF 40px)" }} />
+
+        {anchor && (
+          <div title={t("You are here", lang)} style={{
+            position: "absolute", ...project(anchor.lat, anchor.lng),
+            transform: "translate(-50%,-50%)", fontSize: 18, zIndex: 2,
+          }}>&#128309;</div>
+        )}
+
+        {pts.map((p) => {
+          const active = selPartner && selPartner.id === p.id;
+          return (
+            <button
+              key={p.id}
+              onClick={() => setSelPartner(active ? null : p)}
+              title={`${p.name}${p.km != null ? ` — ${p.km} km` : ""}`}
+              aria-label={p.name}
+              style={{
+                position: "absolute", ...project(p.lat, p.lng),
+                transform: "translate(-50%,-100%)",
+                background: "none", border: "none", padding: 0, cursor: "pointer",
+                fontSize: active ? 30 : 21, lineHeight: 1,
+                zIndex: active ? 3 : 1,
+                filter: active ? "drop-shadow(0 4px 6px rgba(0,0,0,.35))" : "none",
+              }}
+            >&#128205;</button>
+          );
+        })}
+
+        {pts.length === 0 && (
+          <div style={{
+            position: "absolute", inset: 0, display: "grid", placeItems: "center",
+            fontSize: 13.5, color: T.slate, textAlign: "center", padding: 20,
+          }}>{t("No mappable partners for this state yet.", lang)}</div>
+        )}
+
+        <div style={{ position: "absolute", bottom: 8, left: 10, fontSize: 11.5, color: T.slate, background: "#ffffffcc", borderRadius: 6, padding: "3px 8px" }}>
+          {t("Approximate positions — not to scale", lang)}
+        </div>
+      </div>
+      <div style={{ padding: "12px 16px", fontSize: 13.5, color: T.slate }}>
+        {selPartner
+          ? <><b style={{ color: T.ink }}>{selPartner.name}</b> · {selPartner.km} {t("km", lang)}{selPartner.health != null ? <> · {t("Health", lang)} {selPartner.health}/100</> : null}</>
+          : t("Tap a pin or a partner card to highlight it.", lang)}
+      </div>
+    </Card>
+  );
+};
+
 /* card with the left green rule used across myScheme listings */
 const RuleCard = ({ title, sub, icon, onClick }) => (
   <button onClick={onClick} className="lift" style={{
@@ -427,7 +539,7 @@ const Footer = ({ go, lang = 0 }) => (
 const Landing = ({ go, lang, setState, catalogue }) => {
   const [tab, setTab] = useState("Categories");
   const cat = catalogue?.data;
-  const states = cat?.states ?? [];
+  const states = cat?.allStates ?? [];
   const totalSchemes = (cat?.schemes?.national?.length ?? 0) + (cat?.schemes?.state?.length ?? 0);
   const totalBranches = cat?.health?.branches ?? 0;
   const schemesByState = useMemo(() => {
@@ -471,8 +583,8 @@ const Landing = ({ go, lang, setState, catalogue }) => {
 
           <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", maxWidth: 900, margin: "52px auto 0" }}>
             <StatTile n={totalSchemes || "—"} label={t("Schemes mapped", lang)} onClick={() => go("state")} />
-            <StatTile n={states.length || "—"} label={t("States in demo", lang)} onClick={() => go("state")} />
-            <StatTile n={totalBranches ? totalBranches.toLocaleString("en-IN") : "—"} label={t("Eligible partners", lang)} onClick={() => go("state")} />
+            <StatTile n={states.length || "—"} label={t("States & UTs covered", lang)} onClick={() => go("state")} />
+            <StatTile n={totalBranches ? totalBranches.toLocaleString("en-IN") : "—"} label={t("Partner branches", lang)} onClick={() => go("state")} />
           </div>
         </div>
       </div>
@@ -507,11 +619,16 @@ const Landing = ({ go, lang, setState, catalogue }) => {
           <>
             <SectionHead>{t("Explore schemes of", lang)}<br />{t("States / UTs", lang)}</SectionHead>
             <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))" }}>
-              {states.map((st) => (
-                <RuleCard key={st} icon={"\u{1F3DB}\uFE0F"} title={st}
-                  sub={`${(schemesByState[st] ?? []).length} ${t("Schemes", lang)}`}
-                  onClick={() => { setState(st); go("dashboard"); }} />
-              ))}
+              {states.map((st) => {
+                const own = (schemesByState[st] ?? []).length;
+                return (
+                  <RuleCard key={st} icon={"\u{1F3DB}\uFE0F"} title={st}
+                    sub={own
+                      ? `${own} ${t("state schemes", lang)} + ${t("national", lang)}`
+                      : t("National schemes", lang)}
+                    onClick={() => { setState(st); go("dashboard"); }} />
+                );
+              })}
             </div>
           </>
         )}
@@ -596,7 +713,9 @@ const Landing = ({ go, lang, setState, catalogue }) => {
 
 const StateSelect = ({ go, setState, lang, catalogue }) => {
   const cat = catalogue?.data;
-  const states = cat?.states ?? [];
+  // every state the partner locator covers; national schemes apply in all of
+  // them. The 11 with their own state schemes are badged below.
+  const states = cat?.allStates ?? [];
   const schemesByState = useMemo(() => {
     const m = {};
     for (const sc of cat?.schemes?.state ?? []) (m[sc.state] ||= []).push(sc);
@@ -605,7 +724,7 @@ const StateSelect = ({ go, setState, lang, catalogue }) => {
   return (
   <>
     <Page wide>
-      <JourneyRail step={0} lang={lang} />
+      <JourneyRail step={0} lang={lang} go={go} />
       <div style={{ textAlign: "center", marginBottom: 30 }}>
         <div style={{ fontSize: 15, color: "#9AA8A0", fontWeight: 600, marginBottom: 8 }}>{t("Step {n} of {total}", lang, { n: 1, total: 5 })}</div>
         <h2 style={{ fontSize: 36, fontWeight: 800, color: T.ink, lineHeight: 1.15 }}>{t("Where are you", lang)}<br />{t("applying from?", lang)}</h2>
@@ -618,17 +737,19 @@ const StateSelect = ({ go, setState, lang, catalogue }) => {
         <Card><span style={{ color: T.red }}>{t("Could not reach the server. Is the backend running on port 3001?", lang)}</span></Card>
       )}
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}>
-        {states.map((s) => (
-          <RuleCard key={s} icon={"\u{1F3DB}\uFE0F"} title={s}
-            sub={`${(schemesByState[s] ?? []).length} ${t("Schemes", lang)}`}
-            onClick={() => { setState(s); go("dashboard"); }} />
-        ))}
+        {states.map((s) => {
+          const own = (schemesByState[s] ?? []).length;
+          return (
+            <RuleCard key={s} icon={"\u{1F3DB}\uFE0F"} title={s}
+              sub={own
+                ? `${own} ${t("state schemes", lang)} + ${t("national", lang)}`
+                : t("National schemes", lang)}
+              onClick={() => { setState(s); go("dashboard"); }} />
+          );
+        })}
       </div>
-      {/* API-CONTRACT NOTE: GET /api/states lists only states that have
-          state-specific schemes (11). National schemes and the ~74k-branch
-          partner locator cover far more. See the summary for the proposed fix. */}
       <div style={{ fontSize: 13.5, color: T.slate, marginTop: 16, lineHeight: 1.6 }}>
-        {t("This list covers states with their own state schemes. National schemes apply everywhere.", lang)}
+        {t("National schemes apply in every state. Some states add their own schemes on top.", lang)}
       </div>
       <DemoNote lang={lang} />
     </Page>
@@ -679,9 +800,9 @@ const Dashboard = ({ go, state, lang, setCalc }) => (
 );
 
 /* ---- recommender ---- */
-const StepShell = ({ n, total, title, hint, children, onBack, onNext, nextLabel, err, lang }) => (
+const StepShell = ({ n, total, title, hint, children, onBack, onNext, nextLabel, err, lang, go }) => (
   <Page>
-    <JourneyRail step={1} lang={lang} />
+    <JourneyRail step={1} lang={lang} go={go} />
     <div style={{ fontSize: 13, color: T.slate, marginBottom: 4, fontWeight: 600 }}>{t("Step {n} of {total}", lang, { n, total })}</div>
     <div style={{ height: 8, background: "#DEEEE4", borderRadius: 999, marginBottom: 22 }}>
       <div style={{ width: `${(n / total) * 100}%`, height: 8, background: `linear-gradient(90deg, ${T.navy}, #2FA05A)`, borderRadius: 999, transition: "width .25s" }} />
@@ -715,7 +836,7 @@ const MoneyInput = ({ value, onChange, placeholder }) => (
 const Recommender = ({ step, go, form, setForm, err, setErr, lang, state, setRec }) => {
   const set = (patch) => { setErr(""); setForm({ ...form, ...patch }); };
   if (step === 1) return (
-    <StepShell n={1} total={5} lang={lang} err={err} title={t("What type of support do you need?", lang)}
+    <StepShell n={1} total={5} lang={lang} go={go} err={err} title={t("What type of support do you need?", lang)}
       onBack={() => go("dashboard")}
       onNext={() => (form.support ? go("rec2") : setErr(t("Please choose one option to continue.", lang)))}>
       <div style={{ display: "grid", gap: 12 }}>
@@ -735,7 +856,7 @@ const Recommender = ({ step, go, form, setForm, err, setErr, lang, state, setRec
     </StepShell>
   );
   if (step === 2) return (
-    <StepShell n={2} total={5} lang={lang} err={err} title={t("What is your project?", lang)}
+    <StepShell n={2} total={5} lang={lang} go={go} err={err} title={t("What is your project?", lang)}
       hint={t("One line is enough — for example 'tailoring unit' or 'B.Tech course'.", lang)}
       onBack={() => go("rec1")}
       onNext={() => (form.project.trim() ? go("rec3") : setErr(t("Please describe your project in a few words.", lang)))}>
@@ -743,7 +864,7 @@ const Recommender = ({ step, go, form, setForm, err, setErr, lang, state, setRec
     </StepShell>
   );
   if (step === 3) return (
-    <StepShell n={3} total={5} lang={lang} err={err} title={t("What is the estimated project cost?", lang)}
+    <StepShell n={3} total={5} lang={lang} go={go} err={err} title={t("What is the estimated project cost?", lang)}
       hint={t("The total money needed to start — your own savings plus the loan.", lang)}
       onBack={() => go("rec2")}
       onNext={() => { const v = +form.cost; if (!v || v <= 0) return setErr(t("Please enter a valid project cost in rupees.", lang)); go("rec4"); }}>
@@ -752,7 +873,7 @@ const Recommender = ({ step, go, form, setForm, err, setErr, lang, state, setRec
     </StepShell>
   );
   if (step === 4) return (
-    <StepShell n={4} total={5} lang={lang} err={err} title={t("What is your family's yearly income?", lang)}
+    <StepShell n={4} total={5} lang={lang} go={go} err={err} title={t("What is your family's yearly income?", lang)}
       hint={t("Enter the total income earned by your family in one year, from all sources.", lang)}
       onBack={() => go("rec3")}
       onNext={() => { const v = +form.income; if (!v || v <= 0) return setErr(t("Please enter a valid yearly family income.", lang)); go("rec5"); }}>
@@ -761,7 +882,7 @@ const Recommender = ({ step, go, form, setForm, err, setErr, lang, state, setRec
     </StepShell>
   );
   return (
-    <StepShell n={5} total={5} lang={lang} err={err} title={t("Your education status", lang)}
+    <StepShell n={5} total={5} lang={lang} go={go} err={err} title={t("Your education status", lang)}
       hint={t("This helps us match education loans and skill-linked schemes.", lang)}
       nextLabel={t("Find my scheme", lang)}
       onBack={() => go("rec4")}
@@ -821,11 +942,11 @@ const Result = ({ go, rec, state, showWhy, setShowWhy, setCalc, lang }) => {
 
   if (!rec) return <Page><Card>{t("Start with \"Find my scheme\" from the dashboard.", lang)}</Card></Page>;
   if (rec.loading) return (
-    <Page><JourneyRail step={1} lang={lang} /><Card>{t("Loading…", lang)}</Card></Page>
+    <Page><JourneyRail step={1} lang={lang} go={go} /><Card>{t("Loading…", lang)}</Card></Page>
   );
   if (!rec.ok) return (
     <Page>
-      <JourneyRail step={1} lang={lang} />
+      <JourneyRail step={1} lang={lang} go={go} />
       <Card>
         <h2 style={{ marginTop: 0 }}>{t("We couldn't match a scheme", lang)}</h2>
         <p style={{ color: T.slate, lineHeight: 1.55 }}>{t(rec.why[0], lang, rec.why[1])}</p>
@@ -851,7 +972,7 @@ const Result = ({ go, rec, state, showWhy, setShowWhy, setCalc, lang }) => {
 
   return (
     <Page>
-      <JourneyRail step={2} lang={lang} />
+      <JourneyRail step={2} lang={lang} go={go} reachable={(i) => i !== 2} />
       <Card pad={0} style={{ overflow: "hidden" }}>
         <div style={{ background: `linear-gradient(120deg, ${T.greenBg}, #F3FBF6)`, padding: "20px 24px", borderBottom: `1px solid #D7EEDF` }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
@@ -976,9 +1097,16 @@ const Calculator = ({ go, state, calc, setCalc, rec, lang, catalogue }) => {
     { skip: !valid }
   );
   const sc = emi.data ?? { eqi: 0, quarters: 0, totalInterest: 0, totalPaid: 0, rows: [] };
+
+  const SCHEDULE_PREVIEW = 8;
+  const [showAllRows, setShowAllRows] = useState(false);
+  const visibleRows = showAllRows ? sc.rows : sc.rows.slice(0, SCHEDULE_PREVIEW);
+  const principalPct = sc.totalPaid > 0
+    ? Math.round(((+c.amount || 0) / sc.totalPaid) * 100)
+    : 100;
   return (
     <Page wide>
-      <JourneyRail step={3} lang={lang} />
+      <JourneyRail step={3} lang={lang} go={go} reachable={(i) => i !== 3 && (i !== 2 || (rec && rec.ok))} />
       <h2 style={{ fontSize: 25, margin: "0 0 2px", fontWeight: 800 }}>{t("Plan your repayment", lang)}</h2>
       <p style={{ color: T.slate, marginTop: 0, lineHeight: 1.5 }}>{t("Repayments under these schemes are", lang)} <b style={{ color: T.ink }}>{t("quarterly", lang)}</b> {t("— one instalment every 3 months, not every month.", lang)}</p>
       <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit,minmax(290px,1fr))", alignItems: "start" }}>
@@ -1023,22 +1151,41 @@ const Calculator = ({ go, state, calc, setCalc, rec, lang, catalogue }) => {
             <>
               <Card pad={0} style={{ overflow: "hidden" }}>
                 <div style={{ background: `linear-gradient(135deg, ${T.navyDeep}, ${T.navy})`, color: "#fff", padding: "18px 22px" }}>
-                  <div style={{ fontSize: 13, color: "#B9C7E4" }}>{t("Estimated quarterly instalment", lang)}</div>
+                  <div style={{ fontSize: 13, color: "#CFEBD9" }}>{t("Estimated quarterly instalment", lang)}</div>
                   <div style={{ fontSize: 34, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{inr(sc.eqi)}</div>
-                  <div style={{ fontSize: 12.5, color: "#B9C7E4" }}>{t("every 3 months × {n} quarters", lang, { n: sc.quarters })}</div>
+                  <div style={{ fontSize: 12.5, color: "#CFEBD9" }}>{t("every 3 months × {n} quarters", lang, { n: sc.quarters })}</div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
-                  <div style={{ padding: "14px 22px", borderRight: `1px solid ${T.border}` }}>
+
+                {/* What the loan actually costs: principal vs interest, to scale. */}
+                <div style={{ padding: "16px 22px 4px" }}>
+                  <div style={{ fontSize: 13, color: T.slate, marginBottom: 8 }}>{t("Where your money goes", lang)}</div>
+                  <div style={{ display: "flex", height: 14, borderRadius: 999, overflow: "hidden", background: T.border }}>
+                    <div title={t("Principal", lang)} style={{ width: `${principalPct}%`, background: T.green }} />
+                    <div title={t("Interest", lang)} style={{ width: `${100 - principalPct}%`, background: T.saffron }} />
+                  </div>
+                  <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 12.5, color: T.slate, flexWrap: "wrap" }}>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, background: T.green, borderRadius: 3, marginRight: 5 }} />{t("Principal", lang)} {principalPct}%</span>
+                    <span><span style={{ display: "inline-block", width: 10, height: 10, background: T.saffron, borderRadius: 3, marginRight: 5 }} />{t("Interest", lang)} {100 - principalPct}%</span>
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 0, marginTop: 12 }}>
+                  <div style={{ padding: "14px 22px", borderTop: `1px solid ${T.border}` }}>
+                    <div style={{ fontSize: 13, color: T.slate }}>{t("You borrow", lang)}</div>
+                    <div style={{ fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{inr(+c.amount || 0)}</div>
+                  </div>
+                  <div style={{ padding: "14px 22px", borderTop: `1px solid ${T.border}` }}>
                     <div style={{ fontSize: 13, color: T.slate }}>{t("Total interest", lang)}</div>
-                    <div style={{ fontSize: 21, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{inr(sc.totalInterest)}</div>
+                    <div style={{ fontSize: 19, fontWeight: 800, color: T.saffron, fontVariantNumeric: "tabular-nums" }}>{inr(sc.totalInterest)}</div>
                   </div>
-                  <div style={{ padding: "14px 22px" }}>
+                  <div style={{ padding: "14px 22px", borderTop: `1px solid ${T.border}` }}>
                     <div style={{ fontSize: 13, color: T.slate }}>{t("Total repayment", lang)}</div>
-                    <div style={{ fontSize: 21, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{inr(sc.totalPaid)}</div>
+                    <div style={{ fontSize: 19, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{inr(sc.totalPaid)}</div>
                   </div>
                 </div>
+
                 {+c.mor > 0 && (
-                  <div style={{ margin: "0 22px 18px", background: T.amberBg, color: T.amber, borderRadius: 10, padding: "10px 14px", fontSize: 13.5, lineHeight: 1.5 }}>
+                  <div style={{ margin: "14px 22px 18px", background: T.amberBg, color: T.amber, borderRadius: 10, padding: "10px 14px", fontSize: 13.5, lineHeight: 1.5 }}>
                     {t("During the {q}-quarter moratorium you pay interest only ({amt} per quarter). Principal repayment starts from quarter {start}.", lang, { q: +c.mor, amt: inr((sc.moratoriumInterest ?? 0) / Math.max(1, +c.mor)), start: +c.mor + 1 })}
                   </div>
                 )}
@@ -1068,14 +1215,14 @@ const Calculator = ({ go, state, calc, setCalc, rec, lang, catalogue }) => {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5, fontVariantNumeric: "tabular-nums" }}>
                     <thead>
-                      <tr style={{ color: T.slate, background: "#F8FAFD" }}>
+                      <tr style={{ color: T.slate, background: T.mint }}>
                         {["Quarter", "Principal", "Interest", "Payment", "Balance"].map((h, i) => (
                           <th key={h} style={{ padding: "9px 14px", textAlign: i === 0 ? "left" : "right", borderBottom: `1px solid ${T.border}`, fontWeight: 700 }}>{t(h, lang)}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {sc.rows.map((r) => (
+                      {visibleRows.map((r) => (
                         <tr key={r.q} style={{ background: r.phase === "moratorium" ? "#FFFCF4" : "#fff" }}>
                           <td style={{ padding: "7px 14px", borderBottom: `1px solid ${T.border}` }}>Q{r.q}{r.phase === "moratorium" ? " " + t("· moratorium", lang) : ""}</td>
                           <td style={{ padding: "7px 14px", textAlign: "right", borderBottom: `1px solid ${T.border}` }}>{inr(r.principal)}</td>
@@ -1087,6 +1234,17 @@ const Calculator = ({ go, state, calc, setCalc, rec, lang, catalogue }) => {
                     </tbody>
                   </table>
                 </div>
+                {/* long schedules are collapsed by default — 28 quarters of rows
+                    buried the actions below the fold */}
+                {sc.rows.length > SCHEDULE_PREVIEW && (
+                  <div style={{ padding: "10px 20px 16px" }}>
+                    <Btn kind="tertiary" small onClick={() => setShowAllRows(!showAllRows)}>
+                      {showAllRows
+                        ? t("Show fewer quarters", lang)
+                        : t("Show all {n} quarters", lang, { n: sc.rows.length })}
+                    </Btn>
+                  </div>
+                )}
               </Card>
             </>
           )}
@@ -1101,7 +1259,8 @@ const Calculator = ({ go, state, calc, setCalc, rec, lang, catalogue }) => {
   );
 };
 
-const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowFiltered, lang }) => {
+const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowFiltered, lang, rec }) => {
+  const hasRec = !!(rec && rec.ok);
   // Ask the browser where we are; fall back to a state anchor (see api.js).
   const [pos, setPos] = useState(undefined); // undefined = still asking
   useEffect(() => { let alive = true; currentPosition().then((p) => alive && setPos(p)); return () => { alive = false; }; }, []);
@@ -1121,11 +1280,16 @@ const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowF
 
   return (
     <Page wide>
-      <JourneyRail step={4} lang={lang} />
+      <JourneyRail step={4} lang={lang} go={go} reachable={(i) => i !== 4 && (i !== 2 || hasRec)} />
       <h2 style={{ fontSize: 25, margin: "0 0 2px", fontWeight: 800 }}>{t("Nearest eligible partners in {state}", lang, { state })}</h2>
       <p style={{ color: T.slate, marginTop: 0, maxWidth: 640, lineHeight: 1.55 }}>
-        {t("We first check which partners can actually take new applications — funds available and healthy books — and only then rank them by distance. The nearest partner is not always the right one.", lang)}
+        {t("We first check which partners can actually take new applications, then rank them by book health and distance. The nearest partner is not always the right one.", lang)}
       </p>
+      {res.data?.anchoredInState && res.data.total > 0 && (
+        <div style={{ fontSize: 13, color: T.slate, marginBottom: 10, lineHeight: 1.6 }}>
+          {t("Distances are measured from within {state}, not from your current location.", lang, { state })}
+        </div>
+      )}
       {fund.data && fund.data.status && fund.data.status !== "unknown" && (
         <Card pad={14} style={{ marginBottom: 14, background: fund.data.status === "exhausted" ? T.redBg : T.greenBg, borderColor: "transparent" }}>
           <div style={{ fontSize: 14, color: T.ink, lineHeight: 1.6 }}>
@@ -1167,7 +1331,7 @@ const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowF
               {selPartner && selPartner.id === p.id && (
                 <div style={{ marginTop: 12, fontSize: 14, color: T.ink, background: "#F6F8FC", borderRadius: 10, padding: "10px 14px", lineHeight: 1.6 }}>
                   {t("Handles concessional loan applications for {state}. Bring the document checklist from your recommendation.", lang, { state })}
-                  {p.gnpa != null && <> {t("Reported GNPA", lang)}: {p.gnpa}% ({p.npaStatus}).</>}
+                  {p.gnpa != null && <> {t("Modelled GNPA", lang)}: {p.gnpa}% ({p.npaStatus}).{p.npaSimulated ? ` ${t("Simulated — per-branch NPA is not published.", lang)}` : ""}</>}
                 </div>
               )}
             </Card>
@@ -1189,26 +1353,20 @@ const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowF
             </Card>
           )}
         </div>
-        <Card pad={0} style={{ overflow: "hidden" }}>
-          <div style={{ height: 320, background: "linear-gradient(160deg,#E4EFE6 0%,#D8E5F3 100%)", position: "relative" }}>
-            <div style={{ position: "absolute", inset: 0, opacity: 0.5, backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 39px,#C4D0DF 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,#C4D0DF 40px)" }} />
-            <div style={{ position: "absolute", left: "46%", top: "58%", fontSize: 22 }} title="You">🔵</div>
-            {ok.map((p, i) => (
-              <div key={p.id} onClick={() => setSelPartner(p)} title={p.name} style={{
-                position: "absolute", cursor: "pointer", fontSize: selPartner && selPartner.id === p.id ? 32 : 24,
-                left: `${20 + i * 26}%`, top: `${20 + (i % 2) * 30}%`, filter: selPartner && selPartner.id === p.id ? "drop-shadow(0 4px 6px rgba(0,0,0,.3))" : "none",
-              }}>📍</div>
-            ))}
-            <div style={{ position: "absolute", bottom: 8, left: 10, fontSize: 11.5, color: T.slate, background: "#ffffffcc", borderRadius: 6, padding: "3px 8px" }}>
-              {t("Illustrative map — eligible partners only", lang)}
-            </div>
-          </div>
-          <div style={{ padding: "12px 16px", fontSize: 13.5, color: T.slate }}>
-            {selPartner ? <><b style={{ color: T.ink }}>{selPartner.name}</b> · {selPartner.km} {t("km", lang)}{selPartner.health != null ? <> · {t("Health", lang)} {selPartner.health}/100</> : null}</> : t("Tap a pin or a partner card to highlight it.", lang)}
-          </div>
-        </Card>
+        <PartnerMiniMap
+          partners={ok}
+          anchor={res.data?.anchor}
+          selPartner={selPartner}
+          setSelPartner={setSelPartner}
+          lang={lang}
+        />
       </div>
       <DemoNote lang={lang} />
+      <StickyBar wide>
+        <Btn kind="secondary" onClick={() => go(hasRec ? "result" : "dashboard")}>{t("Back", lang)}</Btn>
+        <div style={{ flex: 1 }} />
+        <Btn kind="secondary" onClick={() => go("calc")}>{t("View repayment", lang)}</Btn>
+      </StickyBar>
     </Page>
   );
 };
@@ -1224,7 +1382,7 @@ const Directions = ({ go, selPartner, lang }) => {
   ];
   return (
     <Page>
-      <JourneyRail step={4} lang={lang} />
+      <JourneyRail step={4} lang={lang} go={go} />
       <Card>
         <Badge tone="ok">{t("Eligibility checked ✓ — routing to a partner that can take your application", lang)}</Badge>
         <h2 style={{ fontSize: 24, margin: "12px 0 14px", fontWeight: 800 }}>{t("Directions", lang)}</h2>
@@ -1306,7 +1464,7 @@ const Admin = ({ go, state, lang, catalogue }) => {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
               <thead><tr style={{ color: T.slate, textAlign: "left" }}>
-                {["Partner", "Funds", "NPA", "Distance", "Visibility to users"].map((h) => <th key={h} style={{ padding: "9px 20px", borderBottom: `1px solid ${T.border}`, fontWeight: 700 }}>{t(h, lang)}</th>)}
+                {["Partner", "Funds", "NPA (simulated)", "Distance", "Visibility to users"].map((h) => <th key={h} style={{ padding: "9px 20px", borderBottom: `1px solid ${T.border}`, fontWeight: 700 }}>{t(h, lang)}</th>)}
               </tr></thead>
               <tbody>
                 {r.branches.map((p) => (
@@ -1372,7 +1530,12 @@ export default function App() {
     const [states, schemes, health] = await Promise.all([
       api.states(), api.schemes(), api.health(),
     ]);
-    return { states: states.states ?? [], schemes, health };
+    return {
+      states: states.states ?? [],          // have their own state schemes (11)
+      allStates: states.allStates ?? states.states ?? [], // full partner coverage (39)
+      schemes,
+      health,
+    };
   }, []);
 
   const common = { go, state, lang, catalogue };
@@ -1383,7 +1546,7 @@ export default function App() {
   else if (page.startsWith("rec")) body = <Recommender {...common} step={+page.slice(3)} form={form} setForm={setForm} err={err} setErr={setErr} setRec={setRec} />;
   else if (page === "result") body = <Result {...common} rec={rec} showWhy={showWhy} setShowWhy={setShowWhy} setCalc={setCalc} />;
   else if (page === "calc") body = <Calculator {...common} calc={calc} setCalc={setCalc} rec={rec} />;
-  else if (page === "partners") body = <Partners {...common} selPartner={selPartner} setSelPartner={setSelPartner} showFiltered={showFiltered} setShowFiltered={setShowFiltered} />;
+  else if (page === "partners") body = <Partners {...common} rec={rec} selPartner={selPartner} setSelPartner={setSelPartner} showFiltered={showFiltered} setShowFiltered={setShowFiltered} />;
   else if (page === "directions") body = <Directions {...common} selPartner={selPartner} />;
   else body = <Admin go={go} state={state} lang={lang} catalogue={catalogue} />;
 
@@ -1392,7 +1555,13 @@ export default function App() {
       <style>{CSS}</style>
       <Header lang={lang} setLang={setLang} state={state} go={go} setState={chooseState} catalogue={catalogue} />
       {body}
-      <FloatingChrome go={go} lang={lang} />
+      <FloatingChrome
+        lang={lang}
+        /* chat answers can hand their numbers straight to the calculator,
+           or jump to the partner list for the state the agent detected */
+        onOpenCalculator={(calc, st) => { if (st) chooseState(st); setCalc(calc); go("calc"); }}
+        onFindPartners={(st) => { chooseState(st); go("partners"); }}
+      />
     </div>
   );
 }

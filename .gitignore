@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# local env files — commit the .example instead
+.env
+.env.*
+!.env.example
+
+.DS_Store

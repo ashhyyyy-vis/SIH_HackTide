@@ -1,14 +1,35 @@
 /* ============================================================
-   API client for the PS92 backend (app/backend, Express, :3001).
+   Central API client. This is the ONLY file that knows a backend
+   URL — components import functions from here, never fetch directly.
 
-   Every function here mirrors a route that actually exists on the
-   server — verified against a running instance, not against types.
-   The `adapt*` helpers translate the backend's payload shapes into
-   the shapes this frontend's components already consume, so the UI
-   did not have to be rewritten around the API.
+   Two backends run side by side:
+
+     DATA_API  app/backend            :3001  schemes, partners, EMI,
+                                             fund status, /ai/agent
+     AUTH_API  SIH_HackTide/backend   :5001  JWT auth, Bhashini translate
+
+   Both base URLs come from .env (VITE_API_BASE_URL /
+   VITE_AUTH_API_BASE_URL). If a variable is unset the path stays
+   relative ("/api"), which the Vite dev proxy forwards to :3001 —
+   so the app still runs with no .env at all.
    ============================================================ */
 
-const API = import.meta.env.VITE_API_URL ?? "/api";
+const trim = (u) => (u ?? "").replace(/\/+$/, "");
+
+/* Default to SAME-ORIGIN relative paths, which the Vite proxy forwards to
+   :3001 and :5001. This is deliberate: an absolute http://localhost:3001
+   baked into the bundle breaks the moment the page is served from anything
+   other than your own machine (a dev tunnel, a phone on the LAN), because
+   "localhost" then means the viewer's device and an HTTPS page may not call
+   HTTP. Set the env vars only for a genuinely different public origin. */
+const dataBase = trim(import.meta.env.VITE_API_BASE_URL);
+const authBase = trim(import.meta.env.VITE_AUTH_API_BASE_URL);
+
+const DATA_API = dataBase ? `${dataBase}/api` : "/api";
+const AUTH_API = authBase ? `${authBase}/api` : "/auth-api";
+
+/** How long any single request may take before we give up. */
+const TIMEOUT_MS = 20000;
 
 class ApiError extends Error {
   constructor(status, statusText, path) {
@@ -18,21 +39,36 @@ class ApiError extends Error {
   }
 }
 
-async function get(path) {
-  const r = await fetch(`${API}${path}`);
-  if (!r.ok) throw new ApiError(r.status, r.statusText, path);
-  return r.json();
+/** fetch + timeout + JSON parsing, shared by every call below. */
+async function request(base, path, { method = "GET", body, token, signal } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  // let a caller-supplied signal (e.g. component unmount) also abort us
+  if (signal) signal.addEventListener("abort", () => controller.abort(), { once: true });
+
+  try {
+    const r = await fetch(`${base}${path}`, {
+      method,
+      signal: controller.signal,
+      headers: {
+        ...(body ? { "Content-Type": "application/json" } : {}),
+        // JWT from the auth backend, when the caller has one
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+    if (!r.ok) throw new ApiError(r.status, r.statusText, path);
+    return await r.json();
+  } catch (e) {
+    if (e.name === "AbortError") throw new ApiError(408, "Request timed out", path);
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-async function post(path, body) {
-  const r = await fetch(`${API}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!r.ok) throw new ApiError(r.status, r.statusText, path);
-  return r.json();
-}
+const get = (path, opts) => request(DATA_API, path, opts);
+const post = (path, body, opts) => request(DATA_API, path, { ...opts, method: "POST", body });
 
 const qs = (params) =>
   new URLSearchParams(
@@ -53,6 +89,90 @@ export const api = {
   caste: (caste) => get(`/caste/${encodeURIComponent(caste)}`),
   agent: (goal) => post("/ai/agent", { goal }),
 };
+
+/* ---------------- SIH_HackTide backend (:5001) ----------------
+   Auth + translation live on the second backend. Kept in this same
+   client so components never construct a URL themselves.
+   The JWT is passed in by the caller; this module stores nothing. */
+export const authApi = {
+  sendOtp: (phone_number) => request(AUTH_API, "/auth/send-otp", { method: "POST", body: { phone_number } }),
+  verifyOtp: (phone_number, otp) => request(AUTH_API, "/auth/verify-otp", { method: "POST", body: { phone_number, otp } }),
+  me: (token) => request(AUTH_API, "/auth/me", { token }),
+  translate: (text, targetLanguage, sourceLanguage = "en") =>
+    request(AUTH_API, "/translate", { method: "POST", body: { text, targetLanguage, sourceLanguage } }),
+};
+
+/* ---------------- AI chat ----------------
+   REUSES the existing POST /api/ai/agent on app/backend. That route
+   parses a plain-language goal, then runs the recommend / nearestPartners
+   / fundAvailability tools and returns their real results. There is no
+   LLM and no mock: askAgent() formats genuine backend output into a
+   readable reply. (SIH_HackTide has no chat endpoint at all.) */
+const inrShort = (n) => "₹" + Number(n).toLocaleString("en-IN");
+
+/** Turn the agent's structured tool output into chat-ready text. */
+export function formatAgentReply(res) {
+  const byTool = Object.fromEntries((res.results ?? []).map((r) => [r.tool, r.result]));
+  const lines = [];
+
+  const recs = byTool.recommend?.recommendations ?? [];
+  if (recs.length) {
+    const top = recs[0];
+    lines.push(
+      `Based on ${res.state ?? "your state"}, a project cost of ${inrShort(res.parsedCost)} and a family income of ${inrShort(res.parsedIncome)}, the closest match is **${top.name}** (${top.code}).`
+    );
+    lines.push(
+      `It can finance up to ${inrShort(top.maxLoan)} at ${top.rate}% per year over ${top.tenureYears} years — about ${inrShort(top.quarterly)} per quarter, after a ${top.moratoriumMonths}-month moratorium.`
+    );
+    if (recs.length > 1) {
+      lines.push(`Other options: ${recs.slice(1, 4).map((r) => `${r.name} (${r.code})`).join(", ")}.`);
+    }
+  } else {
+    lines.push(
+      "I could not match a scheme to that. Try including the state, roughly what the project will cost, and your yearly family income — for example: \"a tailoring shop in Karnataka, cost 2 lakh, income 1.5 lakh\"."
+    );
+  }
+
+  const near = byTool.nearestPartners?.branches ?? [];
+  if (near.length) {
+    const p = near[0];
+    lines.push(`Nearest eligible partner: ${p.partnerName}${p.branchName ? ` — ${p.branchName}` : ""}, about ${p.distance_km} km away.`);
+  }
+
+  const fund = byTool.fundAvailability;
+  if (fund?.label) lines.push(`State fund status: ${fund.label}.`);
+
+  return lines.join("\n\n");
+}
+
+/**
+ * Ask the agent a question. Returns { text, raw } so the UI can render
+ * the sentence while keeping the structured data for future use.
+ */
+export async function askAgent(goal, { signal } = {}) {
+  const raw = await post("/ai/agent", { goal }, { signal });
+  const byTool = Object.fromEntries((raw.results ?? []).map((r) => [r.tool, r.result]));
+  const top = byTool.recommend?.recommendations?.[0];
+
+  /* Hand the UI everything it needs to turn the answer into navigation:
+     prefill the repayment calculator, or jump to partners in that state.
+     All of it comes from the agent's own response — nothing invented. */
+  return {
+    text: formatAgentReply(raw),
+    raw,
+    state: raw.state ?? null,
+    calc: top
+      ? {
+          scheme: top.name,
+          code: top.code,
+          amount: Math.round(top.maxLoan),
+          rate: top.rate,
+          tenure: top.tenureYears,
+          mor: Math.round((top.moratoriumMonths ?? 0) / 3), // API months -> UI quarters
+        }
+      : null,
+  };
+}
 
 /* ---------------- contract adapters ----------------
 
@@ -94,6 +214,9 @@ export function adaptPartner(b, i = 0) {
     npa: (b.npa_status ?? "LOW").toLowerCase(),
     npaStatus: b.npa_status ?? "LOW",
     gnpa: b.gnpa_ratio ?? null,
+    // the backend generates per-branch NPA (no public source exists) and
+    // flags it; carry the flag through so the UI can say so plainly
+    npaSimulated: b.npa_simulated === true,
     health: b.health_score ?? null,
     eligible: b.is_eligible !== false,
     lat: b.lat,
@@ -157,28 +280,65 @@ export async function emiQuarters({ amount, rate, tenureYears, moratoriumQuarter
  * backend reports for that state — the same trick the server's own agent uses.
  */
 export async function partnersForState(state, { lat, lng, radiusKm = 50, limit = 12 } = {}) {
-  let anchor = lat != null && lng != null ? { lat, lng } : null;
+  /* Try progressively wider radii from one anchor. Rural states are sparse,
+     and several states are geocoded to a district centroid rather than each
+     branch's true position, so a tight radius can legitimately find nothing. */
+  const search = async (anchor) => {
+    for (const r of [radiusKm, radiusKm * 3, radiusKm * 10, radiusKm * 40]) {
+      const res = await api.nearest({ lat: anchor.lat, lng: anchor.lng, radiusKm: r, limit, state });
+      if (res.branches?.length) return res.branches;
+    }
+    return [];
+  };
 
-  if (!anchor) {
+  /** first branch the backend lists for this state — always inside it */
+  const stateAnchor = async () => {
     const seed = await api.partners({ state, limit: 1 });
     const first = seed.branches?.[0];
-    if (!first) return { eligible: [], filtered: [], total: 0, anchor: null };
-    anchor = { lat: first.lat, lng: first.lng };
+    return first ? { lat: first.lat, lng: first.lng } : null;
+  };
+
+  let anchor = null;
+  let branches = [];
+
+  /* 1. Prefer the user's real position — but only at close range. Stretching
+        the radius from a user who is in another state surfaces one stray
+        branch hundreds of km away while ignoring the thousands actually in
+        the state they asked about. */
+  if (lat != null && lng != null) {
+    anchor = { lat, lng };
+    for (const r of [radiusKm, radiusKm * 3]) {
+      const res = await api.nearest({ lat, lng, radiusKm: r, limit, state });
+      if (res.branches?.length) { branches = res.branches; break; }
+    }
   }
 
-  // widen the radius until we have something to show — rural states are sparse
-  let res = { branches: [] };
-  for (const r of [radiusKm, radiusKm * 3, radiusKm * 10]) {
-    res = await api.nearest({ lat: anchor.lat, lng: anchor.lng, radiusKm: r, limit, state });
-    if (res.branches?.length) break;
+  /* 2. Too few nearby (or none) means the user is not really in this state.
+        Re-anchor inside it so the page shows the state's actual network. */
+  const NEARBY_ENOUGH = 3;
+  if (branches.length < NEARBY_ENOUGH) {
+    const inState = await stateAnchor();
+    if (inState) {
+      const fromState = await search(inState);
+      // keep whichever anchor actually surfaced more of the state's network
+      if (fromState.length > branches.length) {
+        anchor = inState;
+        branches = fromState;
+      }
+    }
+    if (branches.length === 0) {
+      return { eligible: [], filtered: [], total: 0, anchor: null, anchoredInState: false };
+    }
   }
 
-  const all = (res.branches ?? []).map(adaptPartner);
+  const all = branches.map(adaptPartner);
   return {
     anchor,
     total: all.length,
     eligible: all.filter((p) => p.eligible),
     filtered: all.filter((p) => !p.eligible),
+    // true when distances are measured from inside the state, not from you
+    anchoredInState: !(lat != null && lng != null) || anchor.lat !== lat || anchor.lng !== lng,
   };
 }
 
