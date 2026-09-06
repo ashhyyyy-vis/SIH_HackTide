@@ -145,6 +145,56 @@ export function formatAgentReply(res) {
   return lines.join("\n\n");
 }
 
+/* Conversational chat. POST /api/chat runs Gemini on the server, grounded in
+   the same dataset the rest of the API serves — the key stays server-side and
+   never reaches this bundle. If the server has no key configured it answers
+   503, and we fall back to the rule-based agent so the widget still works. */
+let chatAvailable = null; // null = not yet checked
+
+export async function chatStatus() {
+  if (chatAvailable !== null) return chatAvailable;
+  try {
+    const r = await get("/chat/status");
+    chatAvailable = r.configured === true;
+  } catch {
+    chatAvailable = false;
+  }
+  return chatAvailable;
+}
+
+/**
+ * Ask a question. Prefers the LLM endpoint; degrades to the rule-based agent
+ * when the server has no key or the chat service errors.
+ * `history` is [{ role: 'user'|'model', text }] from earlier in the session.
+ */
+export async function askAI(message, { history = [], signal } = {}) {
+  if (await chatStatus()) {
+    try {
+      const r = await post("/chat", { message, history }, { signal });
+      const rec = r.recommendation;
+      return {
+        text: r.reply,
+        source: "gemini",
+        state: r.state ?? null,
+        calc: rec
+          ? {
+              scheme: rec.name, code: rec.code,
+              amount: Math.round(rec.maxLoan), rate: rec.rate,
+              tenure: rec.tenureYears,
+              mor: Math.round((rec.moratoriumMonths ?? 0) / 3),
+            }
+          : null,
+      };
+    } catch (e) {
+      if (e?.status === 503) chatAvailable = false;   // stop retrying this session
+      else if (e?.name === "AbortError" || e?.status === 408) throw e;
+      // any other failure: fall through to the agent rather than showing an error
+    }
+  }
+  const a = await askAgent(message, { signal });
+  return { ...a, source: "agent" };
+}
+
 /**
  * Ask the agent a question. Returns { text, raw } so the UI can render
  * the sentence while keeping the structured data for future use.

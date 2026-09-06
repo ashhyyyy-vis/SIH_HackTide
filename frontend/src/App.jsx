@@ -1495,41 +1495,113 @@ const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowF
   );
 };
 
+/* Real Google Map, embedded without an API key.
+   The keyless `output=embed` endpoint renders an interactive map, and the
+   Maps URL scheme opens turn-by-turn navigation in the user's own maps app.
+   Neither needs a billing account or a key in the bundle. */
+const GoogleMapEmbed = ({ lat, lng, label, lang }) => {
+  const ok = Number.isFinite(lat) && Number.isFinite(lng);
+  if (!ok) {
+    return (
+      <div style={{
+        height: 300, borderRadius: 12, border: `1px solid ${T.border}`,
+        background: T.mint, display: "grid", placeItems: "center",
+        color: T.slate, fontSize: 14, textAlign: "center", padding: 20,
+      }}>{t("This partner has no location on file.", lang)}</div>
+    );
+  }
+  const q = `${lat},${lng}`;
+  return (
+    <iframe
+      title={label ?? t("Map", lang)}
+      src={`https://www.google.com/maps?q=${encodeURIComponent(q)}&z=15&hl=en&output=embed`}
+      style={{ width: "100%", height: 300, border: `1px solid ${T.border}`, borderRadius: 12, display: "block" }}
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+      allowFullScreen
+    />
+  );
+};
+
 const Directions = ({ go, selPartner, lang }) => {
   const p = selPartner;
   if (!p) return <Page><Card>{t("No eligible partner selected.", lang)}</Card></Page>;
+
+  const hasCoords = Number.isFinite(p.lat) && Number.isFinite(p.lng);
+  const dest = hasCoords ? `${p.lat},${p.lng}` : p.addr;
+  // Google's documented cross-platform URL scheme: opens the native maps app
+  // on Android/iOS and Google Maps on desktop.
+  const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+  const pinUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`;
+
   const rows = [
     [t("Starting location", lang), t("Your current location (demo)", lang)],
     [t("Selected partner", lang), p.name],
-    [t("Estimated distance", lang), p.km + " " + t("km", lang)],
+    [t("Estimated distance", lang), p.km != null ? p.km + " " + t("km", lang) : "—"],
     [t("Partner type", lang), p.partnerType ?? "—"],
   ];
+
   return (
-    <Page>
+    <Page wide>
       <JourneyRail step={4} lang={lang} go={go} />
-      <Card>
-        <Badge tone="ok">{t("Eligibility checked ✓ — routing to a partner that can take your application", lang)}</Badge>
-        <h2 style={{ fontSize: 24, margin: "12px 0 14px", fontWeight: 800 }}>{t("Directions", lang)}</h2>
-        <div>
-          {rows.map(([k, v], i) => (
-            <div key={k} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ width: 14, height: 14, borderRadius: 999, background: i === 0 ? T.navy : i === 1 ? T.green : "#C9DCD0", marginTop: 5, boxShadow: i < 2 ? "0 2px 5px rgba(0,0,0,.2)" : "none" }} />
-                {i < rows.length - 1 && <div style={{ width: 3, height: 34, background: T.border, borderRadius: 2 }} />}
+      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", alignItems: "start" }}>
+        <Card>
+          <Badge tone="ok">{t("Eligibility checked ✓ — routing to a partner that can take your application", lang)}</Badge>
+          <h2 style={{ fontSize: 24, margin: "12px 0 14px", fontWeight: 800 }}>{t("Directions", lang)}</h2>
+          <div>
+            {rows.map(([k, v], i) => (
+              <div key={k} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ width: 14, height: 14, borderRadius: 999, background: i === 0 ? T.navy : i === 1 ? T.green : "#C9DCD0", marginTop: 5, boxShadow: i < 2 ? "0 2px 5px rgba(0,0,0,.2)" : "none" }} />
+                  {i < rows.length - 1 && <div style={{ width: 3, height: 34, background: T.border, borderRadius: 2 }} />}
+                </div>
+                <div style={{ paddingBottom: 14 }}>
+                  <div style={{ fontSize: 12.5, color: T.slate }}>{k}</div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>{v}</div>
+                </div>
               </div>
-              <div style={{ paddingBottom: 14 }}>
-                <div style={{ fontSize: 12.5, color: T.slate }}>{k}</div>
-                <div style={{ fontSize: 16, fontWeight: 700 }}>{v}</div>
-              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 14, color: T.slate, marginBottom: 14 }}>
+            {p.addr}{p.phone ? <> · ☎ {p.phone}</> : null}
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Btn kind="secondary" onClick={() => go("partners")}>{t("Back to partners", lang)}</Btn>
+            <a className="hoverBtn" href={navUrl} target="_blank" rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: T.green, color: "#fff", textDecoration: "none",
+                fontWeight: 700, borderRadius: 10, padding: "14px 24px",
+                minHeight: 48, boxSizing: "border-box", fontSize: 16,
+              }}>
+              {t("Start navigation", lang)} ↗
+            </a>
+          </div>
+          <div style={{ fontSize: 12.5, color: T.slate, marginTop: 10, lineHeight: 1.55 }}>
+            {t("Opens Google Maps in a new tab, or your phone's maps app.", lang)}
+          </div>
+        </Card>
+
+        <Card pad={0} style={{ overflow: "hidden" }}>
+          <GoogleMapEmbed lat={p.lat} lng={p.lng} label={p.name} lang={lang} />
+          <div style={{ padding: "12px 16px", fontSize: 13.5, color: T.slate, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ flex: 1, minWidth: 140 }}>
+              <b style={{ color: T.ink }}>{p.name}</b>
+            </span>
+            {hasCoords && (
+              <a className="msLink" href={pinUrl} target="_blank" rel="noopener noreferrer"
+                style={{ color: T.green, fontWeight: 700, fontSize: 13 }}>
+                {t("Open in Google Maps", lang)} ↗
+              </a>
+            )}
+          </div>
+          {hasCoords && (
+            <div style={{ padding: "0 16px 14px", fontSize: 12, color: T.slate }}>
+              {t("Branch coordinates are approximate for some states.", lang)}
             </div>
-          ))}
-        </div>
-        <div style={{ fontSize: 14, color: T.slate, marginBottom: 14 }}>{p.addr} · ☎ {p.phone}</div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Btn kind="secondary" onClick={() => go("partners")}>{t("Back to partners", lang)}</Btn>
-          <Btn kind="success" onClick={() => alert(t("Demo: this would open turn-by-turn navigation in the maps app.", lang))}>{t("Start navigation", lang)}</Btn>
-        </div>
-      </Card>
+          )}
+        </Card>
+      </div>
     </Page>
   );
 };

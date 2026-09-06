@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { askAgent } from "../api";
+import { askAI } from "../api";
 import { t } from "../i18n";
 
 /* ============================================================
@@ -24,19 +24,46 @@ const SPEECH_LANGS = ["en-IN", "hi-IN", "kn-IN", "mr-IN", "ta-IN", "te-IN", "bn-
 
 let nextId = 1;
 
-/** Render **bold** spans from the formatter without pulling in a markdown lib. */
+/** Minimal inline markdown: **bold**, *italic*, and •/-/* bullet lines.
+    The model returns light markdown; this renders it without a library. */
+function inline(str, keyBase) {
+  return str.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g).map((chunk, j) => {
+    if (chunk.startsWith("**") && chunk.endsWith("**") && chunk.length > 4)
+      return <strong key={`${keyBase}b${j}`}>{chunk.slice(2, -2)}</strong>;
+    if (chunk.startsWith("*") && chunk.endsWith("*") && chunk.length > 2)
+      return <em key={`${keyBase}i${j}`}>{chunk.slice(1, -1)}</em>;
+    return <React.Fragment key={`${keyBase}t${j}`}>{chunk}</React.Fragment>;
+  });
+}
+
 function RichText({ text }) {
-  return text.split("\n\n").map((para, i) => (
-    <p key={i} style={{ margin: i === 0 ? 0 : "8px 0 0" }}>
-      {para.split(/(\*\*[^*]+\*\*)/g).map((chunk, j) =>
-        chunk.startsWith("**") && chunk.endsWith("**") ? (
-          <strong key={j}>{chunk.slice(2, -2)}</strong>
-        ) : (
-          <React.Fragment key={j}>{chunk}</React.Fragment>
-        )
-      )}
-    </p>
-  ));
+  const lines = text.split("\n");
+  const blocks = [];
+  let bullets = null;
+
+  const flush = () => {
+    if (bullets) {
+      blocks.push(
+        <ul key={`u${blocks.length}`} style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+          {bullets.map((b, i) => <li key={i} style={{ marginBottom: 3 }}>{inline(b, `l${i}`)}</li>)}
+        </ul>
+      );
+      bullets = null;
+    }
+  };
+
+  lines.forEach((raw, i) => {
+    const line = raw.trim();
+    const bullet = line.match(/^[•*-]\s+(.*)$/);
+    if (bullet) {
+      (bullets ||= []).push(bullet[1]);
+      return;
+    }
+    flush();
+    if (line) blocks.push(<p key={`p${i}`} style={{ margin: blocks.length === 0 ? 0 : "8px 0 0" }}>{inline(line, `p${i}`)}</p>);
+  });
+  flush();
+  return blocks;
 }
 
 export default function AIChat({ T, lang = 0, onOpenCalculator, onFindPartners }) {
@@ -112,7 +139,15 @@ export default function AIChat({ T, lang = 0, onOpenCalculator, onFindPartners }
     abortRef.current = controller;
 
     try {
-      const { text, state, calc } = await askAgent(goal, { signal: controller.signal });
+      // last few turns give the model context for follow-ups
+      const history = messages.slice(-6).map((m) => ({
+        role: m.role === "user" ? "user" : "model",
+        text: m.text,
+      }));
+      const { text, state, calc, source } = await askAI(goal, {
+        history,
+        signal: controller.signal,
+      });
       setMessages((m) => [
         ...m,
         {
@@ -121,6 +156,7 @@ export default function AIChat({ T, lang = 0, onOpenCalculator, onFindPartners }
           text: text || t("I could not find an answer for that.", lang),
           state,
           calc,
+          source,
         },
       ]);
     } catch (e) {
@@ -135,7 +171,7 @@ export default function AIChat({ T, lang = 0, onOpenCalculator, onFindPartners }
       setPending(false);
       abortRef.current = null;
     }
-  }, [input, pending, lang]);
+  }, [input, pending, lang, messages]);
 
   const onKeyDown = (e) => {
     // Enter sends, Shift+Enter makes a newline

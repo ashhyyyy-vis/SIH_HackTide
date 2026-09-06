@@ -2,6 +2,16 @@ import express from 'express';
 import cors from 'cors';
 import { TOOLS, toolTranslate } from './tools.js';
 import { dataset, locator } from './data.js';
+import { geminiChat, geminiConfigured } from './services/gemini.js';
+
+/* Load app/backend/.env without adding a dotenv dependency. Node exposes
+   loadEnvFile() from v20.12; if it is missing or the file is absent we simply
+   run without a key and /api/chat reports that it is unconfigured. */
+try {
+  (process as any).loadEnvFile?.(new URL('../.env', import.meta.url).pathname);
+} catch {
+  // no .env present — fine for the endpoints that need no secret
+}
 
 const app = express();
 app.use(cors(), express.json());
@@ -132,6 +142,43 @@ app.post('/api/ai/agent', async (req, res) => {
   res.json({ goal, state, parsedIncome: income, parsedCost: cost, agentSteps: results.length, results });
 });
 
+// ─── Conversational chat (Gemini, grounded in this dataset) ──────────────────
+// POST /api/chat  { message: string, history?: [{role:'user'|'model', text}] }
+app.post('/api/chat', async (req, res) => {
+  const { message, history } = req.body ?? {};
+
+  if (typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({ error: 'message is required' });
+  }
+  if (message.length > 2000) {
+    return res.status(413).json({ error: 'message too long' });
+  }
+  if (!geminiConfigured()) {
+    // explicit, so the client can fall back to the rule-based agent
+    return res.status(503).json({ error: 'Chat is not configured on the server', configured: false });
+  }
+
+  try {
+    const { reply, grounding } = await geminiChat(
+      message.trim(),
+      Array.isArray(history) ? history : [],
+    );
+    res.json({
+      reply,
+      // let the UI offer "open calculator" / "see partners" without re-asking
+      state: (grounding as any).detectedState ?? null,
+      recommendation:
+        (grounding as any).recommendationForTheseNumbers?.recommendations?.[0] ?? null,
+    });
+  } catch (e: any) {
+    console.error('chat error:', e.message);
+    res.status(502).json({ error: 'Chat service failed', detail: e.message });
+  }
+});
+
+// tells the frontend whether to show the LLM chat or the rule-based agent
+app.get('/api/chat/status', (_req, res) => res.json({ configured: geminiConfigured() }));
+
 // ─── Scheme Graph ─────────────────────────────────────────────────────────────
 app.get('/api/graph/schemes', (_req, res) => {
   const graph = TOOLS.schemeGraph.fn();
@@ -200,6 +247,7 @@ app.listen(PORT, () => {
   console.log(`   GET  /api/tools          ← AI tool registry`);
   console.log(`   POST /api/ai/execute     ← call single tool`);
   console.log(`   POST /api/ai/agent       ← multi-tool agent`);
+  console.log(`   POST /api/chat           ← Gemini chat ${geminiConfigured() ? '(key loaded)' : '(NO KEY — set GEMINI_API_KEY)'}`);
   console.log(`   POST /api/recommend`);
   console.log(`   POST /api/emi`);
   console.log(`   GET  /api/partners`);
