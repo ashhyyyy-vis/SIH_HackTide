@@ -1437,7 +1437,8 @@ const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowF
             <Card key={p.id} lift style={{ borderColor: selPartner && selPartner.id === p.id ? T.navy : T.border, borderWidth: 2 }}>
               <div style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
                 <div style={{ fontWeight: 800, fontSize: 17 }}>{i === 0 ? "⭐ " : ""}{p.name}</div>
-                <Badge tone="info">{p.km} {t("km", lang)}</Badge>
+<Badge tone="info">{p.approxLocation ? "~" : ""}{p.km} {t("km", lang)}</Badge>
+                {p.approxLocation && <Badge tone="warn">{t("Approx. location", lang)}</Badge>}
               </div>
               <div style={{ margin: "8px 0" }}>
                 {p.npaStatus === "LOW" ? <Badge tone="ok">{t("✓ Accepting applications", lang)}</Badge>
@@ -1456,6 +1457,7 @@ const Partners = ({ go, state, selPartner, setSelPartner, showFiltered, setShowF
                 <div style={{ marginTop: 12, fontSize: 14, color: T.ink, background: "#F6F8FC", borderRadius: 10, padding: "10px 14px", lineHeight: 1.6 }}>
                   {t("Handles concessional loan applications for {state}. Bring the document checklist from your recommendation.", lang, { state })}
                   {p.gnpa != null && <> {t("Modelled GNPA", lang)}: {p.gnpa}% ({p.npaStatus}).{p.npaSimulated ? ` ${t("Simulated — per-branch NPA is not published.", lang)}` : ""}</>}
+                  {p.approxLocation && <div style={{ marginTop: 6, color: T.amber }}>{t("Only the state is known for this branch, so the map pin and distance are rough. Confirm the address before travelling.", lang)}</div>}
                 </div>
               )}
             </Card>

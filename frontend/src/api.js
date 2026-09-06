@@ -28,8 +28,11 @@ const authBase = trim(import.meta.env.VITE_AUTH_API_BASE_URL);
 const DATA_API = dataBase ? `${dataBase}/api` : "/api";
 const AUTH_API = authBase ? `${authBase}/api` : "/auth-api";
 
-/** How long any single request may take before we give up. */
+/* Data calls are local and quick. A chat call goes out to Gemini and back —
+   noticeably slower, and slower again over a dev tunnel — so it gets its own,
+   longer budget. 20s was cutting off answers that were still on their way. */
 const TIMEOUT_MS = 20000;
+const CHAT_TIMEOUT_MS = 60000;
 
 class ApiError extends Error {
   constructor(status, statusText, path) {
@@ -40,9 +43,9 @@ class ApiError extends Error {
 }
 
 /** fetch + timeout + JSON parsing, shared by every call below. */
-async function request(base, path, { method = "GET", body, token, signal } = {}) {
+async function request(base, path, { method = "GET", body, token, signal, timeoutMs } = {}) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs ?? TIMEOUT_MS);
   // let a caller-supplied signal (e.g. component unmount) also abort us
   if (signal) signal.addEventListener("abort", () => controller.abort(), { once: true });
 
@@ -170,7 +173,7 @@ export async function chatStatus() {
 export async function askAI(message, { history = [], signal } = {}) {
   if (await chatStatus()) {
     try {
-      const r = await post("/chat", { message, history }, { signal });
+      const r = await post("/chat", { message, history }, { signal, timeoutMs: CHAT_TIMEOUT_MS });
       const rec = r.recommendation;
       return {
         text: r.reply,
@@ -186,9 +189,12 @@ export async function askAI(message, { history = [], signal } = {}) {
           : null,
       };
     } catch (e) {
-      if (e?.status === 503) chatAvailable = false;   // stop retrying this session
+      if (e?.status === 503) chatAvailable = false;   // no key: stop retrying
       else if (e?.name === "AbortError" || e?.status === 408) throw e;
-      // any other failure: fall through to the agent rather than showing an error
+      /* 429 means the provider's rate limit (the free tier allows only ~20
+         requests a minute). Everything else is a transient provider failure.
+         In both cases fall through to the rule-based agent so the user still
+         gets a real, dataset-backed answer instead of an error bubble. */
     }
   }
   const a = await askAgent(message, { signal });
@@ -267,6 +273,11 @@ export function adaptPartner(b, i = 0) {
     // the backend generates per-branch NPA (no public source exists) and
     // flags it; carry the flag through so the UI can say so plainly
     npaSimulated: b.npa_simulated === true,
+    // How the coordinates were derived: "district" is the district HQ (usually
+    // within ~25 km); "state" is only a state centroid and must not be shown
+    // as the branch's real position or as a precise distance.
+    geoPrecision: b.geo_precision ?? null,
+    approxLocation: b.geo_precision === "state",
     health: b.health_score ?? null,
     eligible: b.is_eligible !== false,
     lat: b.lat,

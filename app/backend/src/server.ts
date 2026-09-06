@@ -171,6 +171,15 @@ app.post('/api/chat', async (req, res) => {
         (grounding as any).recommendationForTheseNumbers?.recommendations?.[0] ?? null,
     });
   } catch (e: any) {
+    if (e?.rateLimited) {
+      // the free tier allows 20 requests/minute; tell the client so it can
+      // fall back to the rule-based agent rather than failing outright
+      console.warn('chat rate-limited by Gemini');
+      return res.status(429).json({
+        error: 'Rate limited by the AI provider',
+        retryAfterSeconds: e.retryAfterSeconds ?? 30,
+      });
+    }
     console.error('chat error:', e.message);
     res.status(502).json({ error: 'Chat service failed', detail: e.message });
   }
