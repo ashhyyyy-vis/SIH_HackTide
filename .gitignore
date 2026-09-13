@@ -1,0 +1,25 @@
+# dependencies & build output
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+
+# secrets — commit the .env.example files instead
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# runtime logs from start.sh
+.logs/
+
+# regenerated locator intermediates (rebuild with the scraper)
+scraper/output/partner_branches.json
+scraper/output/partner_branches_summary.json
+scraper/output/*.geojson
+
+.DS_Store
+.vscode/
+Plan.md
